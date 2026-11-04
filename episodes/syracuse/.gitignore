@@ -2,3 +2,5 @@ node_modules/
 out/
 *.wav
 !audio/mix_final.wav
+__pycache__/
+voice/model/
