@@ -29,8 +29,8 @@ export const SHOTS: ShotDef[] = [
   { id: 3, a: 153, b: 316, light: "day", place: "sea", tau: (t) => t },
   { id: 4, a: 316, b: 522, light: "day", place: "wall", tau: (t) => t },
   { id: 5, a: 522, b: 722, light: "day", place: "sea", tau: (t) => t },
-  { id: 6, a: 722, b: 756, light: "day", place: "sea", tau: (t) => t },
-  { id: 7, a: 756, b: 915, light: "day", place: "sea", tau: (t) => t },
+  { id: 6, a: 722, b: 768, light: "day", place: "sea", tau: (t) => t },
+  { id: 7, a: 768, b: 915, light: "day", place: "sea", tau: (t) => t },
   { id: 8, a: 915, b: 1069, light: "day", place: "sea", tau: (t) => t },
   { id: 9, a: 1069, b: 1272, light: "day", place: "sea", tau: (t) => t },
   { id: 10, a: 1272, b: 1417, light: "day", place: "sea", tau: (t) => t },
@@ -65,10 +65,10 @@ export const clawAt = (tau: number): Claw => {
   const lowered = smooth((tau - 20.55) / 0.42);
   let lift = 0, dropped = 0;
   if (tau >= 21.85) lift = 1.15 * smooth((tau - 21.85) / 1.45);
-  if (tau >= 24.2) { const u = clamp01((tau - 24.2) / 0.45); lift = 1.15 * (1 - u * u); dropped = clamp01((tau - 24.2) / 0.47); }
+  if (tau >= 24.5) { const u = clamp01((tau - 24.5) / 0.45); lift = 1.15 * (1 - u * u); dropped = clamp01((tau - 24.5) / 0.47); }
   const bowY = 0.9 + SHIP_L * Math.sin(lift);
-  const clawY = tau >= 24.2 ? lerp(bowY, tipY - 5, smooth((tau - 24.2) / 0.6)) : tau >= 21.0 ? bowY + 0.4 : lerp(tipY - 3, 1.3, lowered);
-  return { beam, clawY, open: tau >= 24.2 ? 1 : tau >= 20.9 ? 0 : 1, lift, dropped };
+  const clawY = tau >= 24.5 ? lerp(bowY, tipY - 5, smooth((tau - 24.5) / 0.6)) : tau >= 21.0 ? bowY + 0.4 : lerp(tipY - 3, 1.3, lowered);
+  return { beam, clawY, open: tau >= 24.5 ? 1 : tau >= 20.9 ? 0 : 1, lift, dropped };
 };
 
 export type ShipKind = "galley" | "flag" | "victim" | "samA" | "samB";
@@ -99,7 +99,7 @@ export const victim = (tau: number): ShipPose => {
   const c = clawAt(tau), lift = c.lift;
   const zs = BOW_Z - SHIP_L * Math.cos(lift); // stern
   let roll = 0.02 * Math.sin(tau), y = 0, sink = 0;
-  if (c.dropped > 0) { const u = clamp01((tau - 24.6) / 0.45); roll = 2.3 * smooth(u); sink = 1.6 * smooth((tau - 24.6) / 1.6) - 0.6 * Math.exp(-6 * Math.max(0, tau - 24.67)) * Math.sin(12 * Math.max(0, tau - 24.67)); y = -sink; }
+  if (c.dropped > 0) { const u = clamp01((tau - 24.9) / 0.45); roll = 2.3 * smooth(u); sink = 1.6 * smooth((tau - 24.9) / 1.6) - 0.6 * Math.exp(-6 * Math.max(0, tau - 24.97)) * Math.sin(12 * Math.max(0, tau - 24.97)); y = -sink; }
   const z0 = tau < 17.4 ? -14 - 10 * (1 - smooth((tau - 15) / 2.4)) : 0; // rows in before the claw
   void zs;
   return { kind: "victim", x: 0, y: y + (SHIP_L / 2) * Math.sin(lift), z: BOW_Z - (SHIP_L / 2) * Math.cos(lift) + z0, yaw: 0, pitch: -lift, roll, row: tau < 21 ? tau * 0.9 : 0, sail: false };
@@ -216,12 +216,14 @@ const CAMS: Record<number, Key[]> = {
   5: [
     { f: 522, s: (f) => dolly([-34, 6.5, -48], [-2, 10, -10], pushK(f, 522, 0.0018), { fov: 48 }) },
     { f: 600, dur: 30, s: (f) => dolly([-27, 5.5, -40], [-1, 11, -12], pushK(f, 600, 0.0018), { fov: 48, roll: -0.02 }) },
-    { f: 660, cut: true, s: (f) => dolly([9.5, 1.3, -26], [0, 9.5, -15], pushK(f, 660, 0.003), { fov: 50, roll: 0.05 }) },
-    { f: 700, cut: true, s: (f) => { const m = M(5, f); return dolly(add(m, [2.0, 1.55, -3.4]), add(m, [0, 1.45, 0]), pushK(f, 700, 0.003, 0.006, 22), { fov: 36 }); } },
+    { f: 660, cut: true, s: (f) => { const by = 0.9 + SHIP_L * Math.sin(clawAt(T(f)).lift); return dolly([7.5, 4.0, -25], [0.4, Math.max(3.5, by - 3), -12.5], pushK(f, 660, 0.002), { fov: 48, roll: 0.05 }); } },
+    // insert: Archimedes keeps drawing while the warship hangs behind him (the core visual joke)
+    { f: 692, cut: true, s: (f) => dolly([7.6, 15.2, 6.5], [2.4, 12.5, -8], pushK(f, 692, 0.003), { fov: 62, roll: -0.03 }) },
+    { f: 710, cut: true, s: (f) => { const m = M(5, f); return dolly(add(m, [2.0, 1.55, -3.4]), add(m, [0, 1.45, 0]), pushK(f, 710, 0.003, 0.007, 12), { fov: 36 }); } },
   ],
   6: [{ f: 722, s: (f) => dolly([17, 4.5, -44], [-4, 6.5, -16], pushK(f, 722, 0.002), { fov: 50, roll: -0.03 }) }],
   7: [
-    { f: 756, s: (f) => { const m = M(7, f); return { pos: [-36, 4.2, m[2] - 4], look: [-15, 3.5, m[2] + 1], fov: 46 }; } },
+    { f: 768, s: (f) => { const m = M(7, f); return { pos: [-36, 4.2, m[2] - 4], look: [-15, 3.5, m[2] + 1], fov: 46 }; } },
     { f: 830, cut: true, s: (f) => { const m = M(7, f); return dolly(add(m, [-4.2, 1.6, -5.2]), add(m, [0.3, 1.5, 0.6]), pushK(f, 830, 0.002), { fov: 42, roll: 0.03 }); } },
     { f: 872, dur: 20, s: (f) => { const m = M(7, f); return { ...dolly(add(m, [-5.5, 1.2, -7.5]), add(m, [0.3, 3.2, 3]), pushK(f, 872, 0.002), { fov: 50, roll: -0.04 }) }; } },
   ],
@@ -258,7 +260,7 @@ const CAMS: Record<number, Key[]> = {
 };
 
 // impact kicks: image offset flips sign every frame, decays over 7 f
-const KICKS: [number, number][] = [[24.67, 1.6], [27.27, 0.8], [30.0, 1.8], [34.83, 0.5], [35.06, 0.5], [35.33, 0.6], [39.62, 1.4], [41.3, 0.8], [61.2, 0.7], [61.67, 0.7]];
+const KICKS: [number, number][] = [[24.97, 1.6], [27.27, 0.8], [30.0, 1.8], [34.83, 0.5], [35.06, 0.5], [35.33, 0.6], [39.62, 1.4], [41.3, 0.8], [61.2, 0.7], [61.67, 0.7]];
 export const kickAt = (t: number) => {
   let a = 0;
   for (const [t0, g] of KICKS) {
@@ -292,7 +294,8 @@ export const DOF: Dof[] = [
   { f: 352, dur: 40, cInf: 11, focus: () => [ARCH[0], ARCH[1] + 0.9, ARCH[2]] },
   { f: 412, cInf: 14, focus: () => [ARCH[0], ARCH[1] + 0.9, ARCH[2]] },
   { f: 522, cInf: 0 },
-  { f: 700, cInf: 13, focus: eyesM(5) },
+  { f: 692, cInf: 7, focus: () => [ARCH[0], ARCH[1] + 0.9, ARCH[2]] },
+  { f: 710, cInf: 13, focus: eyesM(5) },
   { f: 722, cInf: 0 },
   { f: 830, cInf: 10, focus: eyesM(7) },
   { f: 872, dur: 20, cInf: 6, focus: eyesM(7) },

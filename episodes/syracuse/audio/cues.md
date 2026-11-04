@@ -1,7 +1,7 @@
 # Sound cues: The One Guy Who Made Rome Look Stupid
 
 Length 66.333 s (1990 f @ 30 fps), 48 kHz stereo.
-Integrated loudness of the mix: -15.00 LUFS, true peak -1.57 dBTP.
+Integrated loudness of the mix: -15.01 LUFS, true peak -1.95 dBTP.
 
 | t (s) | frame | SFX event | gain dB |
 |---|---|---|---|
@@ -45,11 +45,11 @@ Integrated loudness of the mix: -15.00 LUFS, true peak -1.57 dBTP.
 |  22.20 |   666 | crew whoa | -12 |
 |  22.40 |   672 | crew whoa | -12 |
 |  22.90 |   687 | tension creak | -14 |
-|  24.20 |   726 | release clank | -10 |
-|  24.25 |   728 | fall whistle | -14 |
-|  24.67 |   740 | GIANT SPLASH | -2 |
-|  24.67 |   740 | hull crack | -8 |
-|  24.78 |   743 | plume droop 1 | -16 |
+|  24.50 |   735 | release clank | -10 |
+|  24.55 |   736 | fall whistle | -14 |
+|  24.97 |   749 | GIANT SPLASH | -2 |
+|  24.97 |   749 | hull crack | -8 |
+|  25.08 |   752 | plume droop 1 | -16 |
 |  26.55 |   796 | catapult thunk | -10 |
 |  26.57 |   797 | catapult arm whoosh | -16 |
 |  26.67 |   800 | incoming whistle | -15 |

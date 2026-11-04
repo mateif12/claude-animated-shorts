@@ -94,11 +94,11 @@ ev(21.9, "water pouring off hull", pour(1.6, r), 0, -12)
 for k, b in enumerate([140, 120, 160]):
     ev(22.0 + 0.2 * k, "crew whoa", G.whoa(r, base=b, dur=0.6), (k - 1) * 0.4, -12)
 ev(22.9, "tension creak", G.creak(0.8, r, rate0=90, rate1=140), 0, -14)
-ev(24.2, "release clank", G.clink(r, f0=300, dur=0.3), 0, -10)
-ev(24.25, "fall whistle", falling_whistle(0.42, r, 1300, 400), 0, -14)
-ev(24.67, "GIANT SPLASH", G.splash_big(r), 0, -2)
-ev(24.67, "hull crack", G.wood_crack(r), 0, -8)
-ev(24.78, "plume droop 1", slide_whistle(900, 520, 0.45, r), -0.2, -16)
+ev(24.5, "release clank", G.clink(r, f0=300, dur=0.3), 0, -10)
+ev(24.55, "fall whistle", falling_whistle(0.42, r, 1300, 400), 0, -14)
+ev(24.97, "GIANT SPLASH", G.splash_big(r), 0, -2)
+ev(24.97, "hull crack", G.wood_crack(r), 0, -8)
+ev(25.08, "plume droop 1", slide_whistle(900, 520, 0.45, r), -0.2, -16)
 # boulders
 for t0, tl, big in [(26.55, 27.27, 0), (28.9, 30.0, 1)]:
     ev(t0, "catapult thunk", thunk(r, 70 if big else 100, 0.35), 0.3, -10)
@@ -220,8 +220,8 @@ for tr, vr in I.snare_roll(19.5, 21.7, 0.2, 0.7, rm):
     note(tr, "roll", I.snare(vr, rm, dur=0.15), 0.1, -13)
 for k, m in enumerate([62, 63, 64, 65, 66]):                           # chromatic climb while the ship rises
     note(21.85 + k * 0.29, "horn climb", I.brass(F(m), 0.27, 0.7, rm, kind="horn"), 0, -5)
-# (silence 23.3 -> 24.6: "...stands it on its tail." / "Then it lets go.")
-note(24.68, "cymbal crash", I.cymbal(0.7, rm), 0, -10)
+# (silence 23.3 -> 24.9: "...stands it on its tail." / "Then it lets go.")
+note(24.98, "cymbal crash", I.cymbal(0.7, rm), 0, -10)
 pizz(25.25, 30.0, 0.27, 0.55, g=-3)                       # backing off: comic pizzicato
 note(30.0, "tuba wah", I.brass(F(36), 0.9, 0.8, rm, kind="tuba", fall=-3), 0, -3)
 pizz(30.6, 33.35, 0.32, 0.4, g=-5, notes=(62, 64, 65, 67, 69, 67, 65, 64))   # sneaking
@@ -241,9 +241,11 @@ lyre(56.95, 62.35, 0.2, 0.55, g=-4, pattern=(62, 66, 69, 74, 72, 69, 66, 69, 71,
 for t0 in np.arange(56.95, 62.35, 0.4):
     note(t0, "frame drum", I.brush(0.6, rm), 0, -10)
     note(t0 + 0.2, "triangle", I.triangle(0.3, rm, dur=0.4), 0.3, -18)
-fanfare(62.4, 0.26, 0.9, transpose=2, g=-2)                # Rome wins (by doing math)
-note(64.95, "shock stab", I.brass(F(57), 0.5, 0.9, rm, kind="stab", fall=-4), 0, -3)
-note(64.95, "timp", I.timpani(F(38), 1.0, rm), 0, -5)
+for tr, vr in I.snare_roll(62.4, 64.05, 0.15, 0.55, rm):   # quiet roll under the punchline, the fanfare lands after "math."
+    note(tr, "punch roll", I.snare(vr, rm, dur=0.15), 0.1, -16)
+fanfare(64.45, 0.2, 0.9, transpose=2, g=-2)                # Rome wins (by doing math)
+note(65.0, "shock stab", I.brass(F(57), 0.5, 0.9, rm, kind="stab", fall=-4), 0, -3)
+note(65.0, "timp", I.timpani(F(38), 1.0, rm), 0, -5)
 
 # ---------------------------------------------------------------- mix
 def main():
@@ -266,11 +268,15 @@ def main():
         pass
     from scipy.ndimage import uniform_filter1d
     sm = uniform_filter1d(e2, ns(0.15))
-    MUS *= dbg(-3.0 * sm)[None, :]
+    # extra-deep duck under the hook line and the punchline (measured: words were masked by the fanfares)
+    deep = np.zeros(N); deep[:ns(5.1)] = 1; deep[ns(62.3):ns(64.2)] = 1
+    MUS *= dbg(-(5.0 + 5.0 * deep) * sm)[None, :]
+    SFXW = dbg(-5.0 * sm)[None, :]
     lv = integrated(V)
     lm, ls = integrated(MUS), integrated(sfx)
     MUS *= dbg((lv - 10.0) - lm)    # music bed 10 LU under the voice
     sfx *= dbg((lv - 9.0) - ls)     # SFX bed (impacts peak above it)
+    sfx = sfx * SFXW
     mix = V + MUS + sfx
     g = -15.0 - integrated(mix)
     mix *= dbg(g)

@@ -224,7 +224,7 @@ const ARC: Who = { i: 3, o: ARCHIMEDES, okey: "arc" };
 const legW = (i: number): Who => ({ i: i + 20, o: LEG[i % 4], okey: `leg${i % 4}` });
 
 /** Marcellus' plume = his dignity: springs between targets (overshoot on the way up, droop on the way down) */
-const PLUME: [number, number][] = [[0, 1], [24.75, 0.72], [27.3, 0.5], [30.02, 0.3], [31.6, 0.45], [34.85, 0.22], [37.9, 1.0], [39.7, 0.0], [62.9, 1.0], [64.95, 0.15]];
+const PLUME: [number, number][] = [[0, 1], [25.05, 0.72], [27.3, 0.5], [30.02, 0.3], [31.6, 0.45], [34.85, 0.22], [37.9, 1.0], [39.7, 0.0], [62.9, 1.0], [64.95, 0.15]];
 export const plumeAt = (t: number) => {
   let v = PLUME[0][1];
   for (let i = 1; i < PLUME.length; i++) {
@@ -304,13 +304,13 @@ export const stage = (id: number, t: number, cam: CamInfo): Stage => {
       // flagship crew watching; the victim's crew on its deck until the lift, then sliding off
       const shock = t > 20.0 - LEAD;
       const m = flagSpot(5, t, "marcellus");
-      fig(out, cam, MW(t), m[0], m[1], m[2], { mode: "stand", expr: ex(t, [[0, "smile"], [20.05, "nervous"], [22.5, "shock"], [24.8, "dazed"]]) }, t);
+      fig(out, cam, MW(t), m[0], m[1], m[2], { mode: "stand", expr: ex(t, [[0, "smile"], [20.05, "nervous"], [23.72, "shock"], [24.8, "dazed"]]) }, t);
       const vt = victim(tau);
       if (tau < 21.9) for (let i = 0; i < 4; i++) fig(out, cam, i === 0 ? LUC : legW(i), vt.x + (i % 2 ? 0.8 : -0.8), vt.y + DECK, vt.z + 5.5 - i * 2.4, { mode: "stand", expr: shock ? "shock" : "neutral", prop: ["scutum", 0] }, t);
       else {
         const b = bowAt(tau);
-        if (tau < 24.25) fig(out, cam, LUC, b[0] + 1.3, b[1] - 2.05, b[2], { mode: "fall", expr: "shock", tilt: 5 * Math.sin(t * 4) }, t, { noBlob: true });
-        else if (tau < 24.7) { const u = (tau - 24.25) / 0.45; fig(out, cam, LUC, b[0] + 1.3, b[1] - 2.05 - 4 * u * u, b[2], { mode: "fall", expr: "shock", tilt: 30 * u }, t, { noBlob: true }); }
+        if (tau < 24.55) fig(out, cam, LUC, b[0] + 1.3, b[1] - 2.05, b[2], { mode: "fall", expr: "shock", tilt: 5 * Math.sin(t * 4) }, t, { noBlob: true });
+        else if (tau < 25.0) { const u = (tau - 24.55) / 0.45; fig(out, cam, LUC, b[0] + 1.3, b[1] - 2.05 - 4 * u * u, b[2], { mode: "fall", expr: "shock", tilt: 30 * u }, t, { noBlob: true }); }
         for (let i = 1; i < 4; i++) { // crew sliding down the deck, then dropping into the sea
           const u = clamp01((tau - 21.95 - i * 0.12) / 1.0), lift = -vt.pitch, along = 5.5 - i * 2.4 - 9 * u * u;
           const y = vt.y + Math.sin(lift) * along + DECK * Math.cos(lift), z = vt.z + Math.cos(lift) * along;
@@ -320,8 +320,8 @@ export const stage = (id: number, t: number, cam: CamInfo): Stage => {
       }
       fig(out, cam, ARC, ARCH[0], ARCH[1], ARCH[2], { mode: "sit", expr: "smile_closed", prop: "compass" }, t);
       // the drop: one giant splash at the bow, the rain over the general
-      splash(out, t, 24.67, 0, BOW_Z - 2, 2.4, 1.3);
-      splash(out, t, 24.72, -3, -20, 1.6, 1.2);
+      splash(out, t, 24.97, 0, BOW_Z - 2, 2.4, 1.3);
+      splash(out, t, 25.02, -3, -20, 1.6, 1.2);
       burst(out, t, 21.0, 0, 1.6, BOW_Z + 0.4, 1.6);
       break;
     }
