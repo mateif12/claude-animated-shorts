@@ -25,11 +25,12 @@ cd voice && python3 synth.py 0.92 && ffmpeg -y -i voice_raw.wav -ar 48000 voice.
 cd audio && python3 syracuse_audio.py && cd ..
 ```
 ```bash
-npx remotion render src/index.ts SyracuseShort out/frames --sequence --image-format=jpeg --jpeg-quality=94 --scale=0.6666667 --props='{"post":{"dpr":0.6666667,"msaa":0,"bloom":false}}' --gl=swangle --concurrency=4 --timeout=300000
+node scripts/render_final.mjs out/final 0
 ```
 ```bash
-ffmpeg -framerate 30 -i out/frames/element-%04d.jpeg -i audio/mix.wav -vf "scale=1440:2560:flags=lanczos" -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p -c:a aac -b:a 256k -map 0:v:0 -map 1:a:0 -shortest out/syracuse_1440x2560.mp4
+./scripts/encode_final.sh
 ```
+(`encode_final.sh` expects `out/final` and, if a render was resumed, `out/final2`. Edit the two directory names inside it if your render isn't split.)
 
 ## Render note (CPU-only container): what the delivered file actually is
 `syracuse_540x960.mp4` was rendered in a cloud container **without a GPU** (three.js on SwiftShader) under a hard
