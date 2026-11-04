@@ -123,9 +123,9 @@ for t0, tl, big in [(26.55, 27.27, 0), (28.9, 30.0, 1)]:
     ev(t0, "catapult thunk", thunk(r, 70 if big else 100, 0.35), 0.3, -10)
     ev(t0 + 0.02, "catapult arm whoosh", G.whoosh(0.4, r, peak=0.2), 0.3, -16)
     ev(tl - (0.95 if big else 0.6), "incoming whistle", falling_whistle(0.95 if big else 0.6, r, 1700 if big else 2100, 450), 0, -12 if big else -15)
-    ev(tl, "boulder splash" + (" (huge)" if big else ""), G.splash_big(r) * (1.0 if big else 0.55), 0, -1 if big else -6)
+    ev(tl, "boulder splash" + (" (huge)" if big else ""), G.splash_big(r) * (1.0 if big else 0.55), 0, -11 if big else -6)
     ev(tl + 0.06, "plume droop", slide_whistle(820 if big else 900, 430 if big else 560, 0.5, r), -0.2, -16)
-ev(30.02, "timpani boom", I.timpani(F(38), 1.0, r), 0, -8)
+ev(30.02, "timpani boom", I.timpani(F(38), 1.0, r), 0, -11)
 ev(30.1, "dazed tweets", G.bird_chirps(1.5, r, density=1.2), 0.2, -20)
 # loopholes + arrows
 for k in range(4):
@@ -140,8 +140,8 @@ ev(37.9, "PLUME BOING (up)", boing(r, 220), 0, -9)
 for k in range(3):
     ev(38.0 + 0.07 * k, "sambuca crew hurrah", G.hurrah(r, r.uniform(120, 170), r.uniform(0.95, 1.1)), (k - 1) * 0.4, -15)
 ev(38.95, "rock falling whistle", falling_whistle(0.67, r, 1500, 380), 0, -12)
-ev(39.62, "CRASH: rock on ladder", G.wood_crack(r), 0, -2)
-ev(39.62, "timber tear", G.timber_tear(r, 1.0), 0, -6)
+ev(39.62, "CRASH: rock on ladder", G.wood_crack(r), 0, -12)
+ev(39.62, "timber tear", G.timber_tear(r, 1.0), 0, -14)
 ev(39.7, "plume flop", slide_whistle(700, 260, 0.7, r), -0.2, -14)
 ev(40.1, "crew oofs", G.oof(r, "ow"), 0.3, -12)
 ev(40.77, "ladder splash", G.splash_big(r) * 0.7, 0, -5)
