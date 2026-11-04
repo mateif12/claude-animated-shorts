@@ -50,7 +50,7 @@ const Overlay: React.FC<{ id: number }> = ({ id }) => {
   const f = useCurrentFrame();
   const { width, height } = useVideoConfig();
   const ref = useRef<HTMLCanvasElement>(null);
-  useLayoutEffect(() => { const g = ref.current?.getContext("2d"); if (g) drawOverlay(g, width, height, id, f); }, [f, id, width, height]);
+  useLayoutEffect(() => { const g = ref.current?.getContext("2d"); if (!g) return; g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, width, height); try { drawOverlay(g, width, height, id, f); } catch (e) { console.error("overlay", id, f, e); } }, [f, id, width, height]);
   return <canvas ref={ref} width={width} height={height} style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }} />;
 };
 

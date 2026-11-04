@@ -47,7 +47,9 @@ const SU = 2.16 / 1000; // metres per design unit (the skill's card scale)
 
 type Who = { o: Outfit; at: V3; i: number; fo?: FrontOpts; side?: { phase: number; expr: Expr; mirror?: boolean }; scale?: number; jar?: boolean };
 const person = (c: Ctx, w: Who) => {
-  const s = w.scale ?? 1, feet = proj(c, w.at);
+  const s = w.scale ?? 1;
+  if (cam.position.distanceTo(P.set(w.at[0], w.at[1] + 1.2 * s, w.at[2])) < 2.5) return; // never a giant face filling the lens
+  const feet = proj(c, w.at);
   if (!feet) return;
   const k = ppm(c, w.at) * SU * s;
   if (k <= 0 || feet[0] < -400 * k || feet[0] > c.W + 400 * k || feet[1] < -100 || feet[1] > c.H + 1100 * k) return;
@@ -106,6 +108,7 @@ const crowd = (c: Ctx, cheer: boolean) => {
 };
 
 export const drawOverlay = (g: CanvasRenderingContext2D, W: number, H: number, id: number, f: number) => {
+  g.setTransform(1, 0, 0, 1, 0, 0); g.globalCompositeOperation = "source-over"; g.clearRect(0, 0, W, H);
   const cc = camAt(id, f), s = SHOTS[id - 1];
   cam.aspect = W / H; cam.fov = cc.fov; cam.position.set(...cc.pos); cam.up.set(0, 1, 0); cam.lookAt(...cc.look); cam.rotateZ(cc.roll);
   cam.updateProjectionMatrix(); cam.updateMatrixWorld();

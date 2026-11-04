@@ -14,7 +14,7 @@ An original 58.5 s vertical animated short (720x1280, 30 fps), made with the `ca
 | `voice/` | `voice.wav` (Kokoro v1.0, `am_michael`), `words.json` (Whisper word timings), TTS and timing scripts |
 | `audio/` | `aq_audio.py` (SFX + original score + mix), `mix.wav`, stems, `cues.md` (cue sheet + loudness report) |
 | `remotion/` | Project source: `src/videos/aqueduct/*` (story, world, overlay, composition, plus the skill's shade/ink/grade/paint/toon modules) |
-| `qa/` | Frame-by-frame QA report, contact sheets, render benchmark notes |
+| `qa/` | `QA_REPORT.md`, `report.md` (frame stats), contact sheets |
 
 ## Rebuild
 ```bash
