@@ -1,0 +1,22 @@
+0.25|Rome once attacked a city with sixty warships...
+0.10|and lost to one old man doing geometry.
+0.30|It's Sicily, 214 BC, and General Marcellus figures five days should do it.
+0.15|Behind the walls, the defenses were designed by Archimedes,
+0.25|a seventy-something mathematician who'd rather be drawing circles.
+0.10|The fleet rows right up to the wall.
+0.05|A giant wooden arm swings out, hooks a warship by the nose,
+0.45|and stands it on its tail.
+0.45|Then it lets go.
+0.25|So Marcellus backs off. In come the boulders.
+0.25|He backs off further. Even bigger boulders.
+0.10|He sneaks right under the wall, where nothing can reach him.
+0.35|Tiny holes in the wall. And arrows.
+0.10|His secret weapon, a giant ladder carried on two ships tied together,
+0.35|gets flattened by a rock before it even touches the wall.
+0.30|Marcellus joked that Archimedes was using Roman warships as cups to scoop up the sea.
+0.10|His men weren't laughing.
+0.35|They got so jumpy that if a rope or a stick poked over the wall, they'd turn and run.
+0.35|So the mighty Roman army stopped attacking, and just waited.
+0.10|When they finally got in, it was during a festival,
+0.35|with ladders sized by counting the stones in the wall.
+0.00|Rome beat the mathematician... by doing math.

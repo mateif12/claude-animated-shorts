@@ -1,0 +1,28 @@
+{
+  "name": "syracuse-short",
+  "private": true,
+  "version": "1.0.0",
+  "description": "The One Guy Who Made Rome Look Stupid - cartoon-3d-short episode (Archimedes vs. the Roman army)",
+  "scripts": {
+    "stills": "node scripts/bridge-stills.mjs",
+    "render": "remotion render src/index.ts BridgeShort out/video.mp4 --codec h264 --crf 18 --scale 1.3333"
+  },
+  "dependencies": {
+    "@react-three/fiber": "8.17.10",
+    "@react-three/postprocessing": "2.16.3",
+    "@remotion/bundler": "4.0.242",
+    "@remotion/cli": "4.0.242",
+    "@remotion/renderer": "4.0.242",
+    "@remotion/three": "4.0.242",
+    "postprocessing": "6.36.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.242",
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/three": "0.170.0",
+    "typescript": "5.6.3"
+  }
+}
