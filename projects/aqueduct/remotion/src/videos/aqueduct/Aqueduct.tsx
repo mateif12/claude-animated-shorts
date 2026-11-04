@@ -62,7 +62,6 @@ const ShotView: React.FC<{ id: number; alpha: number }> = ({ id, alpha }) => {
         gl={{ antialias: false, stencil: false, powerPreference: "high-performance", toneMappingExposure: 1.0 }} camera={{ fov: 40, near: 0.15, far: 2000 }}>
         <Inner id={id} />
       </ThreeCanvas>
-      <Overlay id={id} />
     </AbsoluteFill>
   );
 };

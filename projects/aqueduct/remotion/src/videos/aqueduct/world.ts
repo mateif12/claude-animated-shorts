@@ -16,6 +16,8 @@ import {
   liftU, keystoneU, smooth, V3, ShotDef,
 } from "./story";
 
+/** channel gradient: 0.25 % downhill toward the city (east); 0 at the valley centre */
+export const OFF = (x: number) => -0.0025 * x;
 // ---------------- terrain ----------------
 const hash = (x: number, z: number) => { const v = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return v - Math.floor(v); };
 const vnoise = (x: number, z: number) => {
@@ -33,9 +35,13 @@ export const groundY = (x: number, z: number) => {
   y += 36 * smooth((-x - 345) / 80) * (0.7 + 0.3 * vnoise(z / 40, 1)); // ridge behind the spring
   y -= 1.6 * smooth((9 - Math.abs(x)) / 3); // river bed
   // level building plots: survey meadow, spring, city plateau
-  const k = Math.max(smooth((24 - Math.hypot(x - SURVEY[0], z - SURVEY[2])) / 10), smooth((16 - Math.hypot(x - SPRING[0], z - SPRING[2])) / 6),
+  const k = Math.max(smooth((24 - Math.hypot(x - SURVEY[0], z - SURVEY[2])) / 10), 0,
     smooth((x - 140) / 10) * smooth((135 - Math.abs(z)) / 12));
-  return y + (47 - y) * k;
+  y = y + (47 - y) * k;
+  // channel footing west of the arcade and the raised spring terrace (the source is higher than the city)
+  if (x < -139) { const kl = smooth((9 - Math.abs(z)) / 5) * smooth((-x - 139) / 6); y = Math.max(y, y + (46.75 + OFF(x) - y) * kl); }
+  const ks = smooth((17 - Math.hypot(x - SPRING[0], z - SPRING[2])) / 7); y += (SPRING[1] - 0.6 - y) * ks;
+  return y;
 };
 
 // ---------------- textures ----------------
@@ -144,6 +150,8 @@ export class World {
   private fountainWater!: THREE.Mesh;
   private gate!: THREE.Mesh; private wheel!: THREE.Group; private block!: THREE.Mesh; private rope!: THREE.Mesh; private keystone!: THREE.Mesh;
   private baskets: THREE.Mesh[] = []; private bRopes: THREE.Mesh[] = [];
+  private raw!: THREE.Group; private jet!: THREE.Mesh;
+  private cr!: { legs: THREE.Mesh[]; ropes: THREE.Mesh[]; head: THREE.Mesh; lewis: THREE.Mesh };
 
   constructor() {
     const R = this.root;
@@ -195,7 +203,9 @@ export class World {
       marble: lam("marble", () => ({ color: "#efe9dc" })),
       bronze: lam("bronze", () => ({ color: "#7d6a3e" })),
       groove: new THREE.MeshBasicMaterial({ color: "#7fc9e4" }),
-      mount: lam("mount", () => ({ color: "#7d9a7a" })),
+      mount: lam("mount", () => ({ color: "#8c9a86" })),
+      cope: lam("copeS", () => ({ map: stoneT() })), roofc: lam("roofc", () => ({ color: "#b5583a" })), iron2: lam("iron2", () => ({ color: "#4a4a50" })),
+      wet: lam("wetMortar", () => ({ color: "#c47f6a" })), redp: lam("redPole", () => ({ color: "#b8332c" })),
     };
     const roofT = M.roof.map; if (roofT) { roofT.repeat.set(0.25, 0.25); }
 
@@ -203,7 +213,7 @@ export class World {
     const N = 200, SZ = 1100;
     const tg = new THREE.PlaneGeometry(SZ, SZ, N, N); tg.rotateX(-Math.PI / 2);
     const tp = tg.attributes.position as THREE.BufferAttribute, cols: number[] = [];
-    const cA = new THREE.Color("#b3a777"), cDry = new THREE.Color("#d2b07a"), cDeep = new THREE.Color("#98ad78"), tmpC = new THREE.Color();
+    const cA = new THREE.Color("#b8a87a"), cDry = new THREE.Color("#d8b67e"), cDeep = new THREE.Color("#a3ad7c"), tmpC = new THREE.Color();
     for (let i = 0; i < tp.count; i++) {
       const x = tp.getX(i), z = tp.getZ(i), y = groundY(x, z);
       tp.setY(i, y);
@@ -215,11 +225,12 @@ export class World {
     tg.computeVertexNormals();
     const terrain = new THREE.Mesh(tg, M.grass); terrain.receiveShadow = true; R.add(terrain);
 
-    const b = new Batch(), bd = new Batch(), bs = new Batch();
+    const b = new Batch(), bd = new Batch(), bs = new Batch(), bch = new Batch();
     // distant mountains (hazy in the fog)
     const mr = rng(7);
     for (let i = 0; i < 26; i++) {
-      const a = (i / 26) * Math.PI * 2, d = 650 + mr() * 200, h = 90 + mr() * 120, g = new THREE.ConeGeometry(h * 1.6, h, 7);
+      const a = (i / 26) * Math.PI * 2, d = 650 + mr() * 200, h = 90 + mr() * 120, g = new THREE.ConeGeometry(h * 2.3, h, 11, 5);
+      { const pp = g.attributes.position as THREE.BufferAttribute; for (let k = 0; k < pp.count; k++) { const yy = pp.getY(k), q = 1 + 0.22 * (vnoise(pp.getX(k) * 0.03 + i, pp.getZ(k) * 0.03) - 0.5) * (yy < h / 2 - 1 ? 1 : 0); pp.setXYZ(k, pp.getX(k) * q, yy * (1 + 0.15 * (vnoise(pp.getX(k) * 0.05, pp.getZ(k) * 0.05 + i) - 0.5)), pp.getZ(k) * q); } g.computeVertexNormals(); }
       b.add(g, M.mount, at(Math.cos(a) * d, h / 2 - 5, Math.sin(a) * d, mr() * 3));
     }
     // ---- the arcade (tiers: 6 / 12 / 50 bays) ----
@@ -235,20 +246,37 @@ export class World {
     const siteBay = (xc: number) => xc > SITE.x0 && xc < SITE.x1;
     tier(-50, 6, BAY, 0, 99, 9.2, 20, 2.3, 6.2, (xc) => (siteBay(xc) ? bd : b));
     tier(-100, 12, BAY, 20, 50, 29.2, 40, 2.3, 4.8, () => bd);
-    tier(-50 * BAY / 6, 50, BAY / 3, 40, 100, 43.1, 46.6, 0.75, 3.4, () => bd);
+    tier(-50 * BAY / 6, 50, BAY / 3, 40, 100, 43.1, 46.6, 0.75, 3.4, () => bch);
     // string courses (protruding ledges) between tiers
-    b.add(boxGeo(V(-50, 19.6, -3.45), V(50, 20.3, 3.45), 7), M.stone);
+    b.add(boxGeo(V(-50, 19.6, -3.45), V(SITE.x0, 20.3, 3.45), 7), M.stone);
+    bd.add(boxGeo(V(SITE.x0, 19.6, -3.45), V(50, 20.3, 3.45), 7), M.stone); // over the bay built in shot 8
     bd.add(boxGeo(V(-100, 39.6, -2.75), V(100, 40.3, 2.75), 7), M.stone);
     // ---- channel: stone walls, pink lining, water (spring -326 .. castellum 238) ----
-    const cx0 = -326, cx1 = 238;
+    const cx0 = -329.5, cx1 = 238;
     for (const s of [-1, 1]) {
-      bd.add(boxGeo(V(cx0, 46.6, s < 0 ? -1.15 : 0.6), V(cx1, 48.45, s < 0 ? -0.6 : 1.15), 7), M.stone);
-      bd.add(new THREE.PlaneGeometry(cx1 - cx0, 1.0).rotateY(s < 0 ? 0 : Math.PI), M.lining, at((cx0 + cx1) / 2, 47.75, s * -0.595));
+      bch.add(boxGeo(V(cx0, 46.6, s < 0 ? -1.15 : 0.6), V(cx1, 48.45, s < 0 ? -0.6 : 1.15), 7), M.stone);
+      bch.add(new THREE.PlaneGeometry(cx1 - cx0, 1.0, 40, 1).rotateY(s < 0 ? 0 : Math.PI), M.lining, at((cx0 + cx1) / 2, 47.75, s * -0.595));
+      bch.add(boxGeo(V(cx0, 48.45, s < 0 ? -1.22 : 0.53), V(cx1, 48.62, s < 0 ? -0.53 : 1.22), 7), M.cope); // coping slabs
     }
-    bd.add(boxGeo(V(cx0, 46.6, -0.6), V(cx1, 47.25, 0.6), 7), M.lining);
+    bch.add(boxGeo(V(cx0, 46.6, -0.6), V(cx1, 47.25, 0.6), 7), M.lining);
+    // tunnel portal where the channel enters the ridge
+    { const pg = bayGeo(-2.3, 2.3, 46.4, 47.7, 51.4, 0.85, 1.4); pg.rotateY(Math.PI / 2); pg.translate(-189, 0, 0); bch.add(pg, M.stone); }
+    // shot 9: the lining is being applied; raw stone on the near stretch + tools
+    this.raw = new THREE.Group();
+    { const rawM = M.stone, x0 = -69.6, x1 = -57; const add = (g: THREE.BufferGeometry) => { const mm = new THREE.Mesh(g, rawM); mm.receiveShadow = true; this.raw.add(mm); };
+      add(boxGeo(V(x0, 47.25, -0.6), V(x1, 47.27, 0.6), 7)); for (const sz of [-1, 1]) add(boxGeo(V(x0, 47.25, sz < 0 ? -0.6 : 0.585), V(x1, 48.45, sz < 0 ? -0.585 : 0.6), 7));
+      const tub = new THREE.Mesh(cyl(0.34, 0.28, 0.32, 16), M.wood); tub.position.set(-68.4, 48.62 + 0.16, 0.88); this.raw.add(tub);
+      const mort = new THREE.Mesh(cyl(0.31, 0.31, 0.02, 16), M.lining); mort.position.set(-68.4, 48.62 + 0.31, 0.88); this.raw.add(mort);
+      const bsk = new THREE.Mesh(cyl(0.3, 0.24, 0.3, 14), M.bark); bsk.position.set(-66.8, 48.62 + 0.15, -0.88); this.raw.add(bsk);
+      const sr2 = rng(21); for (let k = 0; k < 14; k++) { const sh = new THREE.Mesh(new THREE.BoxGeometry(0.09 + 0.06 * sr2(), 0.03, 0.07 + 0.05 * sr2()), M.roofc); sh.position.set(-66.8 + (sr2() - 0.5) * 0.4, 48.62 + 0.31 + 0.02 * k % 3 * 0.01, -0.88 + (sr2() - 0.5) * 0.4); sh.rotation.set(sr2(), sr2() * 3, sr2()); this.raw.add(sh); }
+      const tr0 = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.012, 0.13), M.iron2); tr0.position.set(-69.25, 47.29, 0.12); tr0.rotation.y = 0.5; this.raw.add(tr0);
+      const th = new THREE.Mesh(cyl(0.022, 0.022, 0.16, 8), M.wood); th.position.set(-69.12, 47.36, 0.2); th.rotation.set(0.6, 0.5, 0); this.raw.add(th);
+      const wet = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.015, 1.18), M.wet); wet.position.set(-69.85, 47.26, 0); this.raw.add(wet);
+      this.raw.traverse((o) => { o.castShadow = true; }); }
     const chW = waterMat(5.0, [1, 0], 1.6);
-    const chMesh = new THREE.Mesh(new THREE.PlaneGeometry(cx1 - cx0, 1.2, 60, 1).rotateX(-Math.PI / 2), chW);
-    chMesh.position.set((cx0 + cx1) / 2, CHY, 0); this.done.add(chMesh); this.waters.push({ m: chW, kind: "channel" });
+    const chG = new THREE.PlaneGeometry(cx1 - cx0, 1.2, 80, 1).rotateX(-Math.PI / 2).translate((cx0 + cx1) / 2, CHY, 0);
+    { const pp = chG.attributes.position as THREE.BufferAttribute; for (let k = 0; k < pp.count; k++) pp.setY(k, pp.getY(k) + OFF(pp.getX(k))); }
+    const chMesh = new THREE.Mesh(chG, chW); this.done.add(chMesh); this.waters.push({ m: chW, kind: "channel" });
     // ---- river ----
     const rW = waterMat(1.2, [0, 1], 0.35);
     const river = new THREE.Mesh(new THREE.PlaneGeometry(18, 1100).rotateX(-Math.PI / 2), rW);
@@ -266,8 +294,11 @@ export class World {
       b.add(g, M.rock, at(SP[0] + Math.cos(a) * d, groundY(SP[0] + Math.cos(a) * d, Math.sin(a) * d) + s * 0.4, SP[2] + Math.sin(a) * d, rr() * 6, rr() * 6));
     }
     b.add(new THREE.DodecahedronGeometry(3.2, 0), M.rock, at(SP[0] - 6.5, SP[1] + 1.8, SP[2] - 0.5, 0.4, 0.3)); // the spring rock
-    for (const s of [-1, 1]) b.add(boxGeo(V(-327.4, 47.2, s * 0.62 - 0.12), V(-326.8, 49.6, s * 0.62 + 0.12)), M.wood);
-    b.add(boxGeo(V(-327.4, 49.4, -0.8), V(-326.8, 49.7, 0.8)), M.wood);
+    for (const s of [-1, 1]) b.add(boxGeo(V(-327.4, 48.0, s * 0.62 - 0.12), V(-326.8, 50.4, s * 0.62 + 0.12)), M.stone);
+    b.add(boxGeo(V(-327.5, 50.3, -0.85), V(-326.7, 50.6, 0.85)), M.stone);
+    { const fw0 = waterMat(3.0, [1, 0], 3.0), cv = new THREE.QuadraticBezierCurve3(V(SP[0] - 5.3, SP[1] + 1.9, -0.4), V(SP[0] - 4.2, SP[1] + 1.9, -0.35), V(SP[0] - 3.4, SP[1] + 0.1, -0.3));
+      const jetM = new THREE.Mesh(new THREE.TubeGeometry(cv, 24, 0.2, 10), fw0); jetM.scale.set(1, 1, 1); R.add(jetM); this.waters.push({ m: fw0, kind: "pool" });
+      const lip = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.3, 1.2), M.stone); lip.position.set(SP[0] - 5.4, SP[1] + 1.75, -0.4); lip.castShadow = true; R.add(lip); }
     this.gate = new THREE.Mesh(new THREE.BoxGeometry(0.12, 1.15, 1.2), M.wood); this.gate.castShadow = true; R.add(this.gate);
     // ---- tunnel hill: shaft heads, windlasses, spoil heaps ----
     SHAFTS.forEach((x, i) => {
@@ -323,21 +354,27 @@ export class World {
     // dressed blocks lying about + the mason's block
     for (let i = 0; i < 9; i++) bs.add(boxGeo(V(-0.6, 0, -0.45), V(0.6, 0.85, 0.45), 7), M.stone, at(20 + (i % 3) * 1.5 + (i > 5 ? 3 : 0), Math.floor(i / 3) % 2 ? 0 : 0, 17 + Math.floor(i / 3) * 1.25, 0.2 * (i % 2)));
     bs.add(boxGeo(V(-0.7, 0, -0.5), V(0.7, 0.9, 0.5), 7), M.stone, at(...SITE.block));
-    // treadwheel crane: two leaning jib beams (A-frame) with a pulley over the bay, the wheel on a frame
-    const W = SITE.wheel, tip = V(sx, 13.6, 4.4);
-    for (const s of [-1, 1]) {
-      bs.add(beam(V(W[0] + 1.2, 0, W[2] + s * 1.4), tip, 0.32), M.wood);
-      bs.add(boxGeo(V(W[0] - 0.15, 0, W[2] + s * 1.0 - 0.15), V(W[0] + 0.15, 2.9, W[2] + s * 1.0 + 0.15)), M.wood);
-    }
-    bs.add(beam(V(W[0] + 1.2, 0, W[2] + 2.6), tip, 0.18), M.rope);
-    bs.add(cyl(0.3, 0.3, 0.3, 12).rotateX(Math.PI / 2), M.wood, at(tip.x, tip.y, tip.z));
+    // treadwheel crane (one machine): the wheel turns between the two feet of the A-frame jib; the hoisting rope winds
+    // on the wheel's axle, runs up a leg to the pulley at the jib head and down to the load (held by a lewis)
+    const W = SITE.wheel;
+    for (const zz of [-0.95, 0.95]) bs.add(boxGeo(V(W[0] - 0.2, 0, W[2] + zz - 0.18), V(W[0] + 0.2, 2.9, W[2] + zz + 0.18)), M.wood); // axle bearings
+    bs.add(boxGeo(V(W[0] - 3.2, 0, W[2] - 1.9), V(W[0] + 3.2, 0.3, W[2] - 1.6)), M.wood); bs.add(boxGeo(V(W[0] - 3.2, 0, W[2] + 1.6), V(W[0] + 3.2, 0.3, W[2] + 1.9)), M.wood); // sills
+    this.cr = { legs: [0, 1].map(() => { const mm = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1, 0.34), M.wood); mm.castShadow = true; this.site.add(mm); return mm; }),
+      ropes: [0, 1, 2, 3].map(() => { const mm = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1, 6), M.rope); mm.castShadow = true; this.site.add(mm); return mm; }),
+      head: (() => { const mm = new THREE.Mesh(cyl(0.34, 0.34, 0.4, 14).rotateX(Math.PI / 2), M.wood); this.site.add(mm); return mm; })(),
+      lewis: (() => { const mm = new THREE.Mesh(new THREE.TorusGeometry(0.16, 0.04, 6, 12), M.iron2); this.site.add(mm); return mm; })() };
+    // mason's tools left on the block (no figures: shot 8a is a close-up of the dressed stone)
+    { const B = SITE.block; const ch1 = new THREE.Mesh(new THREE.BoxGeometry(0.03, 0.03, 0.26), M.iron2); ch1.position.set(B[0] + 0.15, 0.92, B[2] + 0.1); ch1.rotation.y = 0.7; this.site.add(ch1);
+      const mh = new THREE.Mesh(cyl(0.07, 0.07, 0.22, 10).rotateZ(Math.PI / 2), M.wood); mh.position.set(B[0] - 0.25, 0.97, B[2] + 0.2); mh.rotation.y = -0.4; this.site.add(mh);
+      const mhd = new THREE.Mesh(cyl(0.018, 0.018, 0.3, 6).rotateX(Math.PI / 2), M.wood); mhd.position.set(B[0] - 0.3, 0.92, B[2] + 0.38); mhd.rotation.y = -0.4; this.site.add(mhd);
+      const lh = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.02, 0.2), M.dark); lh.position.set(B[0], 0.905, B[2] - 0.15); this.site.add(lh); }
     this.wheel = new THREE.Group();
     const wR = 2.5;
     for (const z of [-0.65, 0.65]) { const t = new THREE.Mesh(new THREE.TorusGeometry(wR, 0.13, 6, 32), M.wood); t.position.z = z; this.wheel.add(t); }
     for (let k = 0; k < 8; k++) { const s = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2 * wR, 0.12), M.wood); s.rotation.z = (k * Math.PI) / 8; for (const z of [-0.65, 0.65]) { const c = s.clone(); c.position.z = z; this.wheel.add(c); } }
     for (let k = 0; k < 24; k++) { const a = (k / 24) * Math.PI * 2, s = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 1.45), M.wood); s.position.set(Math.cos(a) * wR, Math.sin(a) * wR, 0); s.rotation.z = a; this.wheel.add(s); }
     const axle = new THREE.Mesh(cyl(0.18, 0.18, 2.4, 10).rotateX(Math.PI / 2), M.wood); this.wheel.add(axle);
-    this.wheel.position.set(W[0], 2.9, W[2]); this.wheel.traverse((o) => { o.castShadow = true; o.receiveShadow = true; });
+    this.wheel.position.set(W[0], 2.75, W[2]); this.wheel.traverse((o) => { o.castShadow = true; o.receiveShadow = true; });
     this.site.add(this.wheel);
     this.block = new THREE.Mesh(scaleUV(new THREE.BoxGeometry(1.4, 1.0, 1.0), 1 / 7), M.stone); this.block.castShadow = true; this.site.add(this.block);
     this.rope = new THREE.Mesh(cyl(0.035, 0.035, 1, 5).translate(0, -0.5, 0), M.rope); this.site.add(this.rope);
@@ -366,10 +403,21 @@ export class World {
     const T0 = V(207, 47, -12);
     b.add(boxGeo(V(T0.x - 6, 47, T0.z - 7), V(T0.x + 6, 48.6, T0.z + 7), 7), M.marble);
     b.add(boxGeo(V(T0.x - 5, 48.6, T0.z - 2), V(T0.x + 5, 56, T0.z + 6.5), 7), M.marble);
-    for (let k = 0; k < 6; k++) b.add(cyl(0.38, 0.45, 7.2, 12), M.marble, at(T0.x - 4.3 + k * 1.72, 52.2, T0.z - 5.6));
-    b.add(boxGeo(V(T0.x - 5.4, 55.8, T0.z - 6.3), V(T0.x + 5.4, 56.8, T0.z + 6.8)), M.marble);
-    const ped = new THREE.ConeGeometry(7.6, 2.6, 4); ped.rotateY(Math.PI / 4); ped.scale(0.72, 1, 1.0);
-    b.add(scaleUV(ped, 3), M.roof, at(T0.x, 58.1, T0.z + 0.25));
+    for (let k = 0; k < 6; k++) {
+      const cxk = T0.x - 4.3 + k * 1.72;
+      b.add(cyl(0.36, 0.43, 6.4, 16), M.marble, at(cxk, 52.1, T0.z - 5.6));
+      b.add(cyl(0.55, 0.58, 0.3, 16), M.marble, at(cxk, 48.75, T0.z - 5.6));                 // base
+      b.add(cyl(0.58, 0.38, 0.45, 16), M.marble, at(cxk, 55.5, T0.z - 5.6));                 // capital (bell)
+      b.add(boxGeo(V(cxk - 0.6, 55.72, T0.z - 6.2), V(cxk + 0.6, 55.9, T0.z - 5.0)), M.marble); // abacus
+    }
+    for (let k = 0; k < 5; k++) b.add(boxGeo(V(T0.x - 6, 47 + k * 0.32, T0.z - 7 - 2.4 + k * 0.48), V(T0.x + 6, 47 + (k + 1) * 0.32, T0.z - 7)), M.marble); // front steps
+    b.add(boxGeo(V(T0.x - 5.4, 55.9, T0.z - 6.3), V(T0.x + 5.4, 57.0, T0.z + 6.8)), M.marble); // entablature
+    { const tri = new THREE.Shape(); tri.moveTo(-5.7, 0); tri.lineTo(5.7, 0); tri.lineTo(0, 2.5); tri.lineTo(-5.7, 0);
+      const roof = new THREE.ExtrudeGeometry(tri, { depth: 13.6, bevelEnabled: false }); roof.translate(T0.x, 57.0, T0.z - 6.6); b.add(scaleUV(roof, 0.25), M.roof);
+      const tym = new THREE.ShapeGeometry(tri); tym.translate(T0.x, 57.0, T0.z - 6.62); tym.rotateY(0); b.add(tym, M.marble); // pediment face
+      const cor = new THREE.Shape(); cor.moveTo(-5.9, -0.15); cor.lineTo(5.9, -0.15); cor.lineTo(0, 2.62); cor.lineTo(-5.9, -0.15);
+      cor.holes.push(new THREE.Path([new THREE.Vector2(-5.2, 0.12), new THREE.Vector2(5.2, 0.12), new THREE.Vector2(0, 2.25)]));
+      const corG = new THREE.ExtrudeGeometry(cor, { depth: 0.35, bevelEnabled: false }); corG.translate(T0.x, 57.0, T0.z - 6.95); b.add(corG, M.marble); }
     // baths with a dome
     const B0 = V(228, 47, 14);
     b.add(boxGeo(V(B0.x - 9, 47, B0.z - 8), V(B0.x + 9, 55, B0.z + 8), 8), lam("facBath", () => ({ map: romanFacade("bath", "#e9cfa0", false) })));
@@ -378,14 +426,21 @@ export class World {
     const C = CASTELLUM;
     b.add(boxGeo(V(C[0] - 3.2, 47, C[2] - 3.2), V(C[0] + 3.2, 51.5, C[2] + 3.2), 7), M.stone);
     const cro = new THREE.ConeGeometry(4.9, 2.2, 4); cro.rotateY(Math.PI / 4); b.add(scaleUV(cro, 3), M.roof, at(C[0], 52.6, C[2]));
-    // the fountain: round basin, central pillar with a bowl
-    b.add(cyl(3.3, 3.4, 0.8, 28), M.marble, at(P[0], 47.4, P[2]));
-    b.add(cyl(0.45, 0.6, 1.9, 12), M.marble, at(P[0], 48.0, P[2]));
-    b.add(cyl(1.0, 0.5, 0.35, 16), M.marble, at(P[0], 49.05, P[2]));
-    const fw = waterMat(0.4, [0.3, 1], 1.4);
-    this.fountainWater = new THREE.Mesh(new THREE.CircleGeometry(3.0, 28).rotateX(-Math.PI / 2), fw);
-    this.fountainWater.position.set(P[0], 47.72, P[2]); R.add(this.fountainWater); this.waters.push({ m: fw, kind: "fountain" });
-    const dryBed = new THREE.Mesh(new THREE.CircleGeometry(3.0, 28).rotateX(-Math.PI / 2), M.dirt); dryBed.position.set(P[0], 47.45, P[2]); R.add(dryBed);
+    // street fountain (Pompeii type): four stone slabs, a pillar with a spout at the back, fed by a lead pipe
+    { const fx0 = P[0] - 1.25, fx1 = P[0] + 1.25, fz0 = P[2] - 0.8, fz1 = P[2] + 0.8, top = 47.85;
+      b.add(boxGeo(V(fx0, 47, fz0), V(fx1, top, fz0 + 0.2), 7), M.stone); b.add(boxGeo(V(fx0, 47, fz1 - 0.2), V(fx1, top, fz1), 7), M.stone);
+      b.add(boxGeo(V(fx0, 47, fz0), V(fx0 + 0.2, top, fz1), 7), M.stone); b.add(boxGeo(V(fx1 - 0.2, 47, fz0), V(fx1, top, fz1), 7), M.stone);
+      b.add(boxGeo(V(P[0] - 0.28, 47, fz1), V(P[0] + 0.28, 49.1, fz1 + 0.5), 7), M.stone);           // spout pillar
+      b.add(cyl(0.16, 0.18, 0.12, 12), M.bronze, at(P[0], 48.55, fz1 - 0.02, 0, Math.PI / 2));          // bronze spout mask
+      b.add(cyl(0.05, 0.05, 30, 8), M.iron2, at(P[0], 47.06, fz1 + 0.35 + 15, 0, Math.PI / 2));        // lead pipe from the castellum
+      const fw = waterMat(0.5, [0.2, -1], 1.6);
+      this.fountainWater = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 1.2).rotateX(-Math.PI / 2), fw);
+      this.fountainWater.position.set(P[0], 47.7, P[2]); R.add(this.fountainWater); this.waters.push({ m: fw, kind: "fountain" });
+      const jw = waterMat(4.0, [0, -1], 3.0), cv = new THREE.QuadraticBezierCurve3(V(P[0], 48.55, fz1 - 0.08), V(P[0], 48.6, fz1 - 0.55), V(P[0], 47.72, fz1 - 0.75));
+      this.jet = new THREE.Mesh(new THREE.TubeGeometry(cv, 20, 0.055, 8), jw); R.add(this.jet); this.waters.push({ m: jw, kind: "pool" });
+      const dryBed = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 1.2).rotateX(-Math.PI / 2), M.dirt); dryBed.position.set(P[0], 47.25, P[2]); R.add(dryBed); }
+    // ranging poles (red / white) along the surveyed line from the groma
+    for (const dx of [12, 24, 36, 48]) for (let k = 0; k < 4; k++) b.add(cyl(0.035, 0.035, 0.5, 8), k % 2 ? M.marble : M.redp, at(SURVEY[0] + dx, 47 + 0.25 + k * 0.5, SURVEY[2] + dx * 0.02));
     // ---- trees: Italian cypresses and umbrella pines, kept out of every camera's sight line ----
     const cams = camPts(), tr = rng(5);
     let placed = 0;
@@ -408,6 +463,11 @@ export class World {
       placed++;
     }
     b.build(R); bd.build(this.done); bs.build(this.site);
+    const gch = new THREE.Group(); bch.build(gch); this.done.add(gch); this.done.add(this.raw);
+    gch.traverse((o) => { const mm = o as THREE.Mesh; if (!mm.isMesh) return; const pp = mm.geometry.attributes.position as THREE.BufferAttribute;
+      for (let k = 0; k < pp.count; k++) { const x = pp.getX(k), y = pp.getY(k); if (Math.abs(x) < 139.5 && y < 46.3) continue; pp.setY(k, y + OFF(x)); }
+      pp.needsUpdate = true; mm.geometry.computeBoundingSphere(); });
+    this.raw.position.y = OFF(-64);
   }
 
   /** camera-relative sun frozen per shot (the skill's lighting grammar) */
@@ -417,8 +477,8 @@ export class World {
     let fx = 0, fz = 0;
     for (let f = s.a; f < s.b; f += 3) { const c = camAt(id, f), x = c.look[0] - c.pos[0], z = c.look[2] - c.pos[2], n = Math.hypot(x, z) || 1; fx += x / n; fz += z / n; }
     const n = Math.hypot(fx, fz) || 1; fx /= n; fz /= n;
-    const AZ: Record<number, number> = { 1: 35, 11: -28, 7: 120, 8: 110 };
-    const EL: Record<number, number> = { 1: 9, 11: 8 };
+    const AZ: Record<number, number> = { 1: 120, 11: -28, 7: 120, 8: 110 };
+    const EL: Record<number, number> = { 1: 28, 11: 14 };
     const az = THREE.MathUtils.degToRad(AZ[id] ?? L.az), el = THREE.MathUtils.degToRad(EL[id] ?? L.el);
     const hx = fx * Math.cos(az) - fz * Math.sin(az), hz = fz * Math.cos(az) + fx * Math.sin(az);
     v = new THREE.Vector3(hx * Math.cos(el), Math.sin(el), hz * Math.cos(el)).normalize();
@@ -466,28 +526,34 @@ export class World {
     const wc = K.water, front = waterFront(id, f);
     for (const w of this.waters) {
       const u = w.m.uniforms;
-      if (w.kind === "river") { untone(wc.mid, u.cA.value); untone(wc.far, u.cB.value); untone(wc.crest, u.cC.value); }
-      else { untone(s.light === "golden" ? "#3f7fa6" : "#2fa7c2", u.cA.value); untone(s.light === "golden" ? "#5fa0b8" : "#58c6d8", u.cB.value); untone(s.light === "golden" ? "#ffe0b8" : "#d8f6fb", u.cC.value); }
+      { untone(s.light === "golden" ? "#3f7fa6" : "#2fa7c2", u.cA.value); untone(s.light === "golden" ? "#5fa0b8" : "#58c6d8", u.cB.value); untone(s.light === "golden" ? "#ffe0b8" : "#d8f6fb", u.cC.value); }
       u.t.value = t; u.front.value = w.kind === "channel" ? front : 1e9;
       u.fogC.value.copy(this.fog.color); u.fogN.value = this.fog.near; u.fogF.value = this.fog.far;
     }
     const fon = id === 10 ? (f >= 1484 ? 1 : 0) : id === 11 ? 1 : 0;
-    this.fountainWater.visible = fon > 0;
+    this.fountainWater.visible = fon > 0; this.jet.visible = fon > 0; this.raw.visible = id === 9;
     // ---- story state ----
     const siteMode = s.build === "site";
-    this.done.visible = !siteMode; this.site.visible = siteMode;
+    this.done.visible = s.build === "done"; this.site.visible = siteMode;
     const gateUp = id === 10 ? smooth((f - 1376) / 10) : id === 3 || id === 1 || id === 5 || id === 11 ? 1 : 0;
-    this.gate.position.set(-327.1, 47.85 + 1.25 * gateUp, 0);
+    this.gate.position.set(-327.1, 48.75 + 1.25 * gateUp, 0);
     if (siteMode) {
-      this.wheel.rotation.z = -(f - 1074) * 0.045 * (f > 1080 && f < 1205 ? 1 : 0.15);
-      const u = liftU(f), sx = (SITE.x0 + SITE.x1) / 2, by = 0.5 + u * 7.6;
-      this.block.position.set(sx, by, 4.4); this.block.rotation.y = 0.15 * Math.sin(t * 1.3) * u;
-      this.block.visible = f >= 1074 && f < 1160;
-      this.rope.position.set(sx, 13.3, 4.4); this.rope.scale.set(1, Math.max(0.1, 13.3 - by - 0.5), 1);
-      this.rope.visible = f >= 1074 && f < 1160;
-      const sr = (BAY - 2 * 2.3) / 2, a = Math.PI / 2, k = keystoneU(f);
-      this.keystone.position.set(sx, 9.2 + (sr + 0.68) + 3.4 * (1 - k), 0); this.keystone.rotation.set(0, 0, a + 0.0);
-      this.keystone.rotation.z = a; this.keystone.visible = true;
+      const sx = (SITE.x0 + SITE.x1) / 2, sr = (BAY - 2 * 2.3) / 2, W = SITE.wheel;
+      // jib head luffs from over the hoisting spot (z 6.5) to over the keystone slot (z 0) between the shots
+      const tip = V(sx, 15.6, f < 1160 ? 6.5 : 0.0), axle = V(W[0], 2.75, W[2]);
+      const beamTo = (mm: THREE.Mesh, a2: THREE.Vector3, b2: THREE.Vector3) => { mm.position.copy(a2).add(b2).multiplyScalar(0.5); mm.scale.set(1, a2.distanceTo(b2), 1); mm.quaternion.setFromUnitVectors(V(0, 1, 0), b2.clone().sub(a2).normalize()); };
+      beamTo(this.cr.legs[0], V(W[0], 0.3, W[2] - 1.75), tip); beamTo(this.cr.legs[1], V(W[0], 0.3, W[2] + 1.75), tip);
+      this.cr.head.position.copy(tip);
+      beamTo(this.cr.ropes[0], axle, tip);                                           // hoisting rope: axle -> pulley
+      beamTo(this.cr.ropes[1], tip, V(W[0] - 9, 0, W[2] + 6));                       // back stays to ground stakes
+      beamTo(this.cr.ropes[2], tip, V(W[0] - 9, 0, W[2] - 2));
+      let load: THREE.Vector3;
+      if (f < 1160) { const u = liftU(f), by = 0.5 + u * 8.0; this.block.position.set(sx, by, 6.5); this.block.rotation.y = 0.12 * Math.sin(t * 1.3) * u; this.block.visible = true; load = V(sx, by + 0.5, 6.5); }
+      else { this.block.visible = false; const k = keystoneU(f); this.keystone.position.set(sx, 9.2 + (sr + 0.68) + 3.4 * (1 - k), 0); this.keystone.rotation.set(0, 0, Math.PI / 2); load = V(sx, this.keystone.position.y + 0.65, 0); }
+      this.keystone.visible = f >= 1160;
+      beamTo(this.cr.ropes[3], tip, load); this.cr.lewis.position.copy(load).add(V(0, 0.12, 0));
+      this.wheel.rotation.z = -(f < 1160 ? liftU(f) * 8.0 : 8.0 + 3.4 * keystoneU(f)) / 0.18 * 0.12; // rope wound on the axle drum
+      this.rope.visible = false;
     }
     // shaft baskets: up and down on the windlass ropes
     SHAFTS.forEach((x, i) => {

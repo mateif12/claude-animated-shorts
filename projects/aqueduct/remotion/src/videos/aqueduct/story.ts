@@ -18,7 +18,7 @@ export const valleyG = (x: number) => 47 * smooth((Math.abs(x) - 48) / 95); // g
 export const TUN: V3 = [-235, 47, 0]; // tunnel hill centre (shafts on its crest)
 export const tunnelBump = (x: number, z: number) => 16 * Math.exp(-((x - TUN[0]) ** 2 + z * z) / 28 ** 2);
 export const SHAFTS = [-252, -238, -224, -211];
-export const SPRING: V3 = [-333, 48.0, 0];
+export const SPRING: V3 = [-333, 48.9, 0];
 export const SURVEY: V3 = [-150, 47, 45];
 export const PLAZA: V3 = [215, 47, -30]; // fountain in the city square
 export const CASTELLUM: V3 = [240, 47, 0];
@@ -27,12 +27,12 @@ export const SITE = { x0: 50 / 3 * 2, x1: 50, block: [28.2, 0, 13] as V3, wheel:
 // ---------------- shots ----------------
 export type Light = "day" | "golden";
 /** build: "done" = finished aqueduct, "site" = construction state (upper tiers not yet built, one lower bay in work) */
-export type ShotDef = { id: number; a: number; b: number; light: Light; build: "done" | "site" };
+export type ShotDef = { id: number; a: number; b: number; light: Light; build: "done" | "site" | "none" };
 export const SHOTS: ShotDef[] = [
   { id: 1, a: 0, b: 150, light: "golden", build: "done" },     // hook: along the channel, aerial of the arcade
   { id: 2, a: 150, b: 298, light: "day", build: "done" },      // thirsty city, distant springs
   { id: 3, a: 298, b: 404, light: "day", build: "done" },      // the spring: gravity
-  { id: 4, a: 404, b: 586, light: "day", build: "done" },      // surveyors: groma, chorobates
+  { id: 4, a: 404, b: 586, light: "day", build: "none" },      // surveyors: groma, chorobates
   { id: 5, a: 586, b: 769, light: "day", build: "done" },      // gentle slope
   { id: 6, a: 769, b: 908, light: "day", build: "done" },      // shafts and tunnels
   { id: 7, a: 908, b: 1004, light: "day", build: "done" },     // arches over the valley
@@ -108,8 +108,8 @@ export const CAMS: Record<number, Key[]> = {
   ],
   2: [
     // the thirsty city: people with empty jars around a dry fountain
-    { f: 150, s: (f) => dolly(add(PZ, [3.5, 2.6, -18.5]), add(PZ, [0, 1.5, -2]), pushK(f, 150, 0.0025), { fov: 44 }) },
-    { f: 176, dur: 26, s: (f) => dolly(add(PZ, [1.8, 2.1, -15.0]), add(PZ, [0, 1.5, -2]), pushK(f, 176, 0.002, 0.005, 30), { fov: 42, roll: 0.04 }) },
+    { f: 150, s: (f) => dolly([318, 92, -128], [222, 47, -28], pushK(f, 150, 0.0022), { fov: 42 }) },
+    { f: 176, dur: 30, s: (f) => dolly([300, 80, -112], [220, 47, -30], pushK(f, 176, 0.002, 0.005, 30), { fov: 40, roll: 0.03 }) },
     // "the clean springs were dozens of kilometres away": look west over the roofs to the far hills
     { f: 222, cut: true, s: (f) => zoom([214, 74, -32], [-300, 64, 0], 34, pushK(f, 222, 0.004)) },
   ],
@@ -120,7 +120,7 @@ export const CAMS: Record<number, Key[]> = {
   ],
   4: [
     // surveyors: the engineer sights along the groma
-    { f: 404, s: (f) => dolly(add(SV, [2.4, 1.75, -5.6]), add(SV, [0.2, 1.45, 0]), pushK(f, 404, 0.0025), { fov: 40 }) },
+    { f: 404, s: (f) => dolly(add(SV, [-6.5, 1.8, 0.9]), add(SV, [8, 1.25, -0.2]), pushK(f, 404, 0.0018), { fov: 44 }) },
     // the chorobates, a 6 m levelling table
     { f: 462, cut: true, s: (f) => dolly(add(SV, [3.0, 2.6, -10.5]), add(SV, [6.5, 0.9, 2]), pushK(f, 462, 0.002), { fov: 46, roll: 0.03 }) },
     // "water-level": close on the water groove along the table top
@@ -134,7 +134,7 @@ export const CAMS: Record<number, Key[]> = {
   ],
   6: [
     // the tunnel hill: shafts down to the channel line, windlasses on top
-    { f: 769, s: (f) => dolly([-206, 66, 24], [-232, 59, 0], pushK(f, 769, 0.002), { fov: 46 }) },
+    { f: 769, s: (f) => dolly([-166, 50.6, 6.5], [-200, 51.5, 0], pushK(f, 769, 0.002), { fov: 52 }) },
     // "shafts": close on a shaft head, workers hauling spoil up
     { f: 852, cut: true, s: (f) => dolly([-220.5, shaftY(-224) + 2.4, 8.5], [-224, shaftY(-224) + 0.6, 0], pushK(f, 852, 0.0028), { fov: 42, roll: -0.03 }) },
   ],
@@ -147,7 +147,7 @@ export const CAMS: Record<number, Key[]> = {
     // construction: a mason dresses a block (kicks on the mallet strikes)
     { f: 1004, s: (f) => dolly(add(S.block, [-1.2, 1.3, 3.6]), add(S.block, [-0.7, 0.85, 0]), pushK(f, 1004, 0.0025), { fov: 40 }) },
     // "treadwheel cranes": the wheel turns, the block climbs
-    { f: 1074, cut: true, s: (f) => dolly([29, 4.4, 29], [39, 5.2, 8.5], pushK(f, 1074, 0.0018), { fov: 60 }) },
+    { f: 1074, cut: true, s: (f) => dolly([62, 4.5, 33], [39.5, 7.0, 7.5], pushK(f, 1074, 0.0018), { fov: 56 }) },
     // "wooden frames": the centering under the half-built arch, the keystone goes in
     { f: 1160, cut: true, s: (f) => dolly([41.7, 2.4, 19.5], [41.7, 11.0, 0], pushK(f, 1160, 0.0022), { fov: 56, roll: 0.0 }) },
     { f: 1212, dur: 26, s: (f) => dolly([41.7, 2.2, 17.0], [41.7, 12.0, 0], pushK(f, 1212, 0.002, 0.005, 28), { fov: 54, roll: 0.04 }) },
@@ -161,9 +161,9 @@ export const CAMS: Record<number, Key[]> = {
     // the gate at the spring opens: water rushes into the channel
     { f: 1368, s: (f) => dolly(add(SP, [14, 2.1, 6.2]), add(SP, [6, 0.3, 0]), pushK(f, 1368, 0.0025), { fov: 42 }) },
     // racing the water front along the top of the arcade
-    { f: 1414, cut: true, s: (f) => { const x = waterFront(10, f); return { pos: [x - 9, 50.6, 4.6], look: [x + 4, 47.6, 0], fov: 50, roll: -0.03 }; } },
+    { f: 1414, cut: true, s: (f) => { const x = waterFront(10, f); return { pos: [x - 8, 51.0, 1.6], look: [x + 5, 47.5, 0], fov: 50, roll: -0.03 }; } },
     // the city: the fountain bursts on "fountains", the baths steam behind
-    { f: 1456, cut: true, s: (f) => dolly(add(PZ, [2.5, 2.4, -12.5]), add(PZ, [0, 1.8, 0]), pushK(f, 1456, 0.002, 0.006, 30), { fov: 44 }) },
+    { f: 1456, cut: true, s: (f) => dolly(add(PZ, [2.2, 1.9, -5.2]), add(PZ, [0, 0.95, 0.3]), pushK(f, 1456, 0.002, 0.006, 30), { fov: 44 }) },
   ],
   11: [
     // golden ending: from above the city back across the whole aqueduct; slow crane up and out
@@ -171,7 +171,7 @@ export const CAMS: Record<number, Key[]> = {
   ],
 };
 
-const KICKS: [number, number][] = [[379 / FPS, 0.6], ...STRIKES.map((f) => [f / FPS, 0.5] as [number, number]), [1222 / FPS, 0.9], [1487 / FPS, 0.7]];
+const KICKS: [number, number][] = [[379 / FPS, 0.6], [1222 / FPS, 0.9], [1487 / FPS, 0.5]];
 export const kickAt = (t: number) => {
   let a = 0;
   for (const [t0, g] of KICKS) {
