@@ -18,6 +18,13 @@ Proven on **The Bridge That Fell for a Song**, a 67 s short about the 1831 Broug
 | `references/frames/` | 38 full-size reference frames (540x960) to compare your frames against |
 | `references/sheets/` | 20 contact sheets, one per reference short, 60 frames each (1,200 frames) |
 
+## Production workflow (series standard)
+Every episode follows **`PRODUCTION_WORKFLOW.md`**:
+- **Phase A:** you give a topic, we deliver the script, you approve it and record `episodes/<name>/voice.mp3`.
+- **Phase B:** at most 120 minutes to a native 540×960, 30 fps, on-twos MP4 built around your voice.
+
+Start a new episode with `bash scripts/new_episode.sh <name>` (starter: `templates/episode/`). Benchmark episode: `episodes/syracuse/`.
+
 ## Install
 1. Copy this folder to `~/.claude/skills/cartoon-3d-short/` (clone it there, or download the ZIP).
 2. You need [Remotion](https://www.remotion.dev/) with `@remotion/three`, plus Node, Python 3 and ffmpeg.

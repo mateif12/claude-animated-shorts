@@ -12,17 +12,36 @@ import sfx_gen as G
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
-FPS, TOTAL = 30, 1990
+FPS = 30
+# narration-first: the supplied voice.mp3 (decoded by scripts/analyze_voice.py) is the clock. Every time below is
+# STORY time (the timing the animation was designed on); W() maps it onto the recording via voice/warp.json.
+if not os.path.exists(os.path.join(ROOT, "voice.mp3")) or not os.path.exists(os.path.join(ROOT, "voice", "warp.json")):
+    raise SystemExit("*** NARRATION MISSING: put the recorded narration at episodes/syracuse/voice.mp3 and run python3 scripts/analyze_voice.py")
+WARP = json.load(open(os.path.join(ROOT, "voice", "warp.json")))
+TOTAL = WARP["videoFrames"]
 DUR = TOTAL / FPS
 N = ns(DUR)
+_A = WARP["anchors"]
+
+
+def W(ts):
+    """story seconds -> voice seconds (identity without anchors)"""
+    if not _A:
+        return ts
+    xs, ys = [a[0] for a in _A], [a[1] for a in _A]
+    if ts <= xs[0]:
+        return ys[0] + ts - xs[0]
+    if ts >= xs[-1]:
+        return ys[-1] + ts - xs[-1]
+    return float(np.interp(ts, xs, ys))
 F = I.m2f
 EVENTS = []
 
 
 def ev(t, name, x, p=0.0, g=0.0, buf=None):
     """place one sound (mono/stereo) at t seconds, pan p, gain g dB, logging it for cues.md"""
-    place(buf if buf is not None else SFX, pan(x, p) if np.ndim(x) == 1 else x, t, dbg(g))
-    EVENTS.append((t, name, g))
+    place(buf if buf is not None else SFX, pan(x, p) if np.ndim(x) == 1 else x, W(t), dbg(g))
+    EVENTS.append((W(t), name, g))
 
 
 # ---------------------------------------------------------------- custom comic sounds
@@ -62,14 +81,14 @@ def pour(dur, r):
 SFX = np.zeros((2, N))
 r = rng(214)
 # ambience: sea + breeze + gulls on the sea shots (0-47.2), beach breeze (47.2-56.9), festival murmur (56.9-62.4)
-sea = G.water_bed(47.3, r, close=0.6, slosh_rate=0.6)
+sea = G.water_bed(W(47.3) - W(0.0), r, close=0.6, slosh_rate=0.6)
 ev(0.0, "sea bed (shots 1-10)", fades(sea, 0.05, 1.0), 0, -16)
 ev(0.0, "breeze", fades(G.breeze(DUR, r, level=0.8), 0.1, 1.0), 0, -24)
-ev(1.0, "gulls", G.bird_chirps(16, r, density=0.25), 0.4, -22)
-ev(47.3, "beach waves", fades(G.water_bed(9.6, r, close=0.3, slosh_rate=0.3), 0.3, 0.6), 0, -20)
-ev(53.4, "crickets (golden)", fades(G.crickets(13, r), 0.6, 1.0), 0, -24)
+ev(1.0, "gulls", G.bird_chirps(W(17.0) - W(1.0), r, density=0.25), 0.4, -22)
+ev(47.3, "beach waves", fades(G.water_bed(W(56.9) - W(47.3), r, close=0.3, slosh_rate=0.3), 0.3, 0.6), 0, -20)
+ev(53.4, "crickets (golden)", fades(G.crickets(max(1.0, DUR - W(53.4)), r), 0.6, 1.0), 0, -24)
 for k in range(10):  # festival chatter behind the wall
-    ev(56.9 + 0.2 * k, "festival babble", fades(G.babble(5.4, r, r.uniform(110, 210), r.uniform(0.95, 1.15)), 0.3, 0.6), r.uniform(-0.6, 0.6), -30)
+    ev(56.9 + 0.2 * k, "festival babble", fades(G.babble(W(62.3) - W(56.9), r, r.uniform(110, 210), r.uniform(0.95, 1.15)), 0.3, 0.6), r.uniform(-0.6, 0.6), -30)
 # oars: a stroke every 1.1 s while the fleet rows (shots 1, 3, 5)
 for t0 in np.arange(0.3, 21.0, 1.1):
     if 5.0 < t0 < 5.3 or 10.4 < t0 < 17.3:
@@ -156,7 +175,7 @@ rm = rng(77)
 
 
 def note(t, name, x, p=0.0, g=0.0):
-    place(MUS, pan(x, p) if np.ndim(x) == 1 else x, t, dbg(g))
+    place(MUS, pan(x, p) if np.ndim(x) == 1 else x, W(t), dbg(g))
 
 
 def fanfare(t0, q, vel=0.8, transpose=0, g=0.0):
@@ -269,7 +288,7 @@ def main():
     from scipy.ndimage import uniform_filter1d
     sm = uniform_filter1d(e2, ns(0.15))
     # extra-deep duck under the hook line and the punchline (measured: words were masked by the fanfares)
-    deep = np.zeros(N); deep[:ns(5.1)] = 1; deep[ns(62.3):ns(64.2)] = 1
+    deep = np.zeros(N); deep[:ns(W(5.1))] = 1; deep[ns(W(62.3)):ns(W(64.2))] = 1
     MUS *= dbg(-(5.0 + 5.0 * deep) * sm)[None, :]
     SFXW = dbg(-5.0 * sm)[None, :]
     lv = integrated(V)

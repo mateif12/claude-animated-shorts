@@ -1,0 +1,31 @@
+{
+  "name": "episode-short",
+  "private": true,
+  "version": "1.0.0",
+  "description": "cartoon-3d-short episode (starter from templates/episode)",
+  "scripts": {
+    "stills": "node scripts/stills.mjs",
+    "render": "node scripts/render.mjs",
+    "encode": "bash scripts/encode.sh",
+    "qa": "python3 scripts/qa.py",
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@react-three/fiber": "8.17.10",
+    "@react-three/postprocessing": "2.16.3",
+    "@remotion/bundler": "4.0.242",
+    "@remotion/cli": "4.0.242",
+    "@remotion/renderer": "4.0.242",
+    "@remotion/three": "4.0.242",
+    "postprocessing": "6.36.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "remotion": "4.0.242",
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "@types/react": "18.3.12",
+    "@types/three": "0.170.0",
+    "typescript": "5.6.3"
+  }
+}

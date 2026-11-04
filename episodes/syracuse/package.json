@@ -4,8 +4,14 @@
   "version": "1.0.0",
   "description": "The One Guy Who Made Rome Look Stupid - cartoon-3d-short episode (Archimedes vs. the Roman army)",
   "scripts": {
-    "stills": "node scripts/bridge-stills.mjs",
-    "render": "remotion render src/index.ts BridgeShort out/video.mp4 --codec h264 --crf 18 --scale 1.3333"
+    "stills": "node scripts/stills.mjs",
+    "voice": "python3 scripts/analyze_voice.py",
+    "audio": "python3 audio/syracuse_audio.py",
+    "render": "node scripts/render.mjs",
+    "encode": "bash scripts/encode.sh",
+    "qa": "python3 scripts/qa.py",
+    "produce": "bash scripts/produce.sh",
+    "typecheck": "tsc --noEmit -p ."
   },
   "dependencies": {
     "@react-three/fiber": "8.17.10",

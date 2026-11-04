@@ -8,7 +8,8 @@
 // Place changes crossfade by stacking a second canvas for the fade frames; the hook ends on a 4-frame white flash.
 import React, { useEffect, useMemo, useState } from "react";
 import * as THREE from "three";
-import { AbsoluteFill, continueRender, delayRender, getInputProps, useCurrentFrame } from "remotion";
+import { AbsoluteFill, continueRender, delayRender, getInputProps } from "remotion";
+import { useStoryFrame, VIDEO_FRAMES } from "./timewarp";
 import { ThreeCanvas } from "@remotion/three";
 import { useThree } from "@react-three/fiber";
 import { EffectComposer } from "@react-three/postprocessing";
@@ -20,7 +21,8 @@ import { GradeEffect, GRADES, GRADE_STRENGTH, gradeFor } from "./grade";
 import { Kit } from "./build";
 import { TOTAL, FLASH_AT, SHOTS, layersAt, dofAt } from "./story";
 
-export const SYRACUSE_FRAMES = TOTAL;
+/** video length = the supplied narration's length (voice/warp.json), falling back to the story length */
+export const SYRACUSE_FRAMES = VIDEO_FRAMES || TOTAL;
 
 /** A/B switches for test stills only (Remotion inputProps `{ post: { ink: false, ... } }`); everything is on by default. */
 type PostToggles = { ink: boolean; lens: boolean; pre: boolean; bloom: boolean; grade: boolean; grain: boolean; msaa: number };
@@ -48,7 +50,7 @@ const useKit = () => {
 };
 
 const Inner: React.FC<{ id: number; kit: Kit }> = ({ id, kit }) => {
-  const f = useCurrentFrame();
+  const f = useStoryFrame();
   const { camera, scene } = useThree();
   const world = useMemo(() => new World(kit), [kit]);
   const target = useMemo(() => new THREE.Vector3(), []);
@@ -112,7 +114,7 @@ const ShotView: React.FC<{ id: number; kit: Kit; alpha: number }> = ({ id, kit, 
 );
 
 export const SyracuseShort: React.FC = () => {
-  const f = useCurrentFrame();
+  const f = Math.round(useStoryFrame()); // integer story frame for layers / flash (Inner keeps the exact one)
   const kit = useKit();
   if (!kit) return null;
   const flash = f >= FLASH_AT && f < FLASH_AT + 4 ? [1, 0.75, 0.45, 0.2][f - FLASH_AT] : 0;

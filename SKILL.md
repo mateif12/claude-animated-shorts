@@ -5,6 +5,10 @@ description: Make a ~55-70 s vertical cartoon story short in the "2D characters 
 
 # Cartoon 3D story short (three.js + Remotion)
 
+> **Series production standard (2026-11-04): follow `PRODUCTION_WORKFLOW.md`.** It is audio-first: the user supplies `episodes/<name>/voice.mp3`.
+> **Never generate narration unless asked.** Start from `templates/episode/` (`bash scripts/new_episode.sh <name>`). Profile: 540×960, 30 fps, on twos.
+> Production after the MP3 is limited to 120 minutes. The style rules below still define the look; the voice/render steps below are superseded by that file.
+
 Proven example: **The Bridge That Fell for a Song**. It is an original 67 s short about the 1831 Broughton bridge and 74 soldiers marching in step.
 - Code: `src/videos/bridge/` of your Remotion project (composition `BridgeShort`, 1080x1920, 30 fps).
 - Script, voice and sound: `~/bridge-short/`.

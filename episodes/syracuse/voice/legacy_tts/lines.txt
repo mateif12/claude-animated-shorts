@@ -4,9 +4,9 @@
 0.15|Behind the walls, the defenses were designed by Archimedes,
 0.25|a seventy-something mathematician who'd rather be drawing circles.
 0.10|The fleet rows right up to the wall.
-0.05|A giant wooden arm swings out, hooks a warship by the nose,
+0.05|A giant wooden arm swings out, grabs a warship by the nose,
 0.45|and stands it on its tail.
-0.45|Then it lets go.
+0.45|And then... it lets go.
 0.25|So Marcellus backs off. In come the boulders.
 0.25|He backs off further. Even bigger boulders.
 0.10|He sneaks right under the wall, where nothing can reach him.

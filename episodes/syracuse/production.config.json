@@ -1,0 +1,41 @@
+{
+  "_comment": "Standard production profile of the series (proven on Syracuse, 2026-11-04). Read by scripts/render.mjs, scripts/stills.mjs, scripts/encode.sh and scripts/qa.py. The composition stays 1080x1920 @ 30 fps; 'scale' sets the native output size.",
+  "composition": "SyracuseShort",
+  "output": {
+    "width": 540,
+    "height": 960,
+    "fps": 30
+  },
+  "scale": 0.5,
+  "drawEvery": 2,
+  "post": {
+    "dpr": 0.5,
+    "ink": true,
+    "grade": true,
+    "lens": false,
+    "bloom": false,
+    "msaa": 0,
+    "grain": false
+  },
+  "gl": "swangle",
+  "concurrency": 4,
+  "jpegQuality": 92,
+  "crf": 17,
+  "audio": {
+    "targetLufs": -15.0,
+    "ceilingDbfs": -2.0,
+    "musicBelowVoiceLu": 10.0,
+    "sfxBelowVoiceLu": 9.0,
+    "musicDuckDb": 5.0,
+    "deepDuckDb": 10.0,
+    "sfxDuckDb": 5.0
+  },
+  "budgetMinutes": {
+    "script": 15,
+    "storyboard": 15,
+    "implementation": 20,
+    "render": 60,
+    "qa": 10,
+    "total": 120
+  }
+}

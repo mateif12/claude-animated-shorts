@@ -10,27 +10,28 @@ sound modules.
 | `SCRIPT.md` | Final English narration (207 words). |
 | `SHOTS.md` | Storyboard: every shot with frame ranges, word anchors and the joke it carries, plus the comedy review. |
 | `src/videos/syracuse/` | Remotion + three.js source. `story.ts` (timeline, physics, cameras, DOF, kicks), `world.ts` (sea wall, town, temple, galleys, claw crane, catapults, sambuca, beach camp), `cast.ts` (who is where, per shot), `toon.ts` (template characters + Archimedes, Marcellus, Lucius, Roman helmets, plume, beard, shield, props). The other files are unchanged from the template, except `Bridge.tsx` (render-budget switches). |
-| `voice/` | `lines.txt` → `synth.py` (Piper TTS, `en_US-ryan-high`) → `voice.wav`. `words.py` (faster-whisper) → `words.json`. The voice model is not committed: download it into `voice/model/`. |
+| `voice/` | `story_words.json` (the clock the animation was designed on), `warp.json` (story → your recording), `TIMING.md`; `legacy_tts/` holds the retired placeholder-voice scripts. |
 | `audio/syracuse_audio.py` | Original score + SFX event table + mix (reuses the template's `dsp.py`, `instruments.py`, `sfx_gen.py`). Writes `mix.wav`, stems and `cues.md`. |
-| `scripts/stills.mjs` | Linux port of `bridge-stills.mjs` (SwiftShader GL, `DPR=` env for a smaller buffer). |
+| `scripts/` | Standard workflow scripts: `analyze_voice.py`, `render.mjs`, `encode.sh`, `qa.py`, `stills.mjs`, `produce.sh`. `production.config.json` holds the profile. |
 
-## Rebuild
+## Narration: audio-first (since 2026-11-04)
+The approved video used a generated placeholder voice. From now on the narration is **your recording**. Put it at:
+
+**`episodes/syracuse/voice.mp3`**
+
+(record the ```narration block in `SCRIPT.md`). Then, inside `episodes/syracuse/`:
 ```bash
-npm install
+python3 scripts/analyze_voice.py
 ```
+This aligns your recording to the timing the animation was designed on (`voice/story_words.json`) and writes `voice/warp.json`
+plus a report in `voice/TIMING.md`. Read its deviation list before rendering.
 ```bash
-cd voice && python3 synth.py 0.92 && ffmpeg -y -i voice_raw.wav -ar 48000 voice.wav && python3 words.py && cd ..
+bash scripts/produce.sh
 ```
-```bash
-cd audio && python3 syracuse_audio.py && cd ..
-```
-```bash
-node scripts/render_final.mjs out/final 0
-```
-```bash
-./scripts/encode_final.sh
-```
-(`encode_final.sh` expects `out/final` and, if a render was resumed, `out/final2`. Edit the two directory names inside it if your render isn't split.)
+This runs mix → render (resumable) → encode → QA and writes a new `syracuse_540x960.mp4` (the approved placeholder version stays in git history).
+Animation, music and SFX follow your voice through `src/videos/syracuse/timewarp.ts` and `W()` in `audio/syracuse_audio.py`.
+Without `voice.mp3` every step stops with `NARRATION MISSING`. The retired placeholder TTS scripts are in `voice/legacy_tts/` and
+`scripts/legacy/`; do not use them. See `PRODUCTION_WORKFLOW.md` at the repo root for the full workflow.
 
 ## Render note (CPU-only container): what the delivered file actually is
 `syracuse_540x960.mp4` was rendered in a cloud container **without a GPU** (three.js on SwiftShader) under a hard
