@@ -35,9 +35,9 @@ export const SHOTS: ShotDef[] = [
   { id: 9, a: 1069, b: 1272, light: "day", place: "sea", tau: (t) => t },
   { id: 10, a: 1272, b: 1417, light: "day", place: "sea", tau: (t) => t },
   { id: 11, a: 1417, b: 1600, light: "day", place: "beach", tau: (t) => t },
-  { id: 12, a: 1600, b: 1700, light: "golden", place: "beach", tau: (t) => t, sunAz: 40, sunEl: 9 },
-  { id: 13, a: 1700, b: 1874, light: "golden", place: "beach", tau: (t) => t, sunAz: -35, sunEl: 6 },
-  { id: 14, a: 1874, b: TOTAL, light: "golden", place: "beach", tau: (t) => t, sunAz: -35, sunEl: 8 },
+  { id: 12, a: 1600, b: 1700, light: "golden", place: "beach", tau: (t) => t, sunAz: 150, sunEl: 14 },
+  { id: 13, a: 1700, b: 1874, light: "golden", place: "beach", tau: (t) => t, sunAz: -140, sunEl: 10 },
+  { id: 14, a: 1874, b: TOTAL, light: "golden", place: "beach", tau: (t) => t, sunAz: -140, sunEl: 12 },
 ];
 export const XFADE: Record<number, number> = { 4: 8, 11: 8, 12: 8, 13: 8 };
 export const FLASH_AT = 153;
@@ -140,7 +140,7 @@ export const boulderAt = (b: Boulder, tau: number): V3 | null => {
 /** catapult arm angle (0 = cocked back, 1 = thrown) */
 export const cataArm = (i: number, tau: number) => (i === 0 ? Math.max(smooth((tau - 26.45) / 0.18), 0) * (1 - smooth((tau - 27.6) / 1.2)) + smooth((tau - 28.8) / 0.18) * (1 - smooth((tau - 29.9) / 1.2)) : 0);
 /** loopholes (sea wall, shot 8): open 0..1; arrows fired at the shield */
-export const LOOPS: V3[] = [[-36.9, 3.6, 0], [-38.6, 2.7, 0], [-35.4, 2.4, 0], [-39.9, 4.1, 0]];
+export const LOOPS: V3[] = [[-34.5, 3.4, 0], [-36.3, 2.8, 0], [-34.9, 2.0, 0], [-36.7, 3.9, 0]];
 export const loopOpen = (tau: number, i: number) => smooth((tau - 33.38 - i * 0.12) / 0.25);
 export const ARROWS = [34.75, 34.98, 35.25];
 // beach: the ladders (shot 13) and the poking stick
@@ -148,7 +148,7 @@ export const LADDERS: { x: number; t: number }[] = [{ x: 101.6, t: 61.13 }, { x:
 export const ladderLean = (tau: number, t0: number) => 1 - easeIn((tau - (t0 - 0.35)) / 0.35); // 1 = in the air, 0 = against the wall
 export const stickOut = (id: number, tau: number) =>
   id === 11 ? smooth((tau - 50.15) / 0.5) * (1 - smooth((tau - 52.6) / 0.5)) : id === 14 ? smooth((tau - 64.85) / 0.4) : 0;
-export const STICK_X = (id: number) => (id === 14 ? 103.1 : 104.6);
+export const STICK_X = (id: number) => (id === 14 ? 102.55 : 104.6);
 
 // ---------------- camera ----------------
 export type Cam = { pos: V3; look: V3; fov: number; roll: number };
@@ -185,7 +185,7 @@ const zoom = (pos: V3, look: V3, fov: number, k: number, rest: Partial<Cam> = {}
 export const DECK = 1.31; // deck top above the ship origin (world.ts DECK_Y - 0.25 + 0.01)
 export const ARCH: V3 = [6, WALL_H, 2.9];
 export const flagSpot = (id: number, t: number, who: "marcellus" | "lucius"): V3 => {
-  const s = FLAG(id, t), fwd = who === "marcellus" ? 5.2 : 4.6, side = who === "marcellus" ? 0.45 : -0.95;
+  const s = FLAG(id, t), fwd = who === "marcellus" ? (id === 8 ? 2.4 : 5.2) : 4.6, side = who === "marcellus" ? (id === 8 ? 0.3 : 0.45) : -0.95;
   const cy = Math.cos(s.yaw), sy = Math.sin(s.yaw);
   return [s.x + sy * fwd + cy * side, s.y + DECK, s.z + cy * fwd - sy * side];
 };
@@ -247,13 +247,13 @@ const CAMS: Record<number, Key[]> = {
   12: [{ f: 1596, s: (f) => dolly([92, 3.0, -34], [103, 3.6, -10], pushK(f, 1596, 0.002), { fov: 46 }) }],
   13: [
     { f: 1696, s: (f) => dolly([95, 2.6, -26], [104, 11, 0], pushK(f, 1696, 0.0022), { fov: 48 }) },
-    { f: 1782, cut: true, s: (f) => ({ pos: [100.8, 2.4, -5.4], look: [102.9, 2.6, -0.8], fov: 42 }) },
-    { f: 1786, dur: 40, s: (f) => zoom([100.8, 2.4, -5.4], [102.9, 6.4, -0.6], 44, pushK(f, 1786, 0.002), { roll: 0.03 }) },
+    { f: 1782, cut: true, s: (f) => ({ pos: [100.6, 1.9, -6.6], look: [102.9, 2.3, -1.4], fov: 42 }) },
+    { f: 1790, dur: 40, s: (f) => zoom([100.6, 1.9, -6.6], [102.9, 3.6, -1.0], 46, pushK(f, 1790, 0.002), { roll: 0.03 }) },
     { f: 1834, cut: true, s: (f) => dolly([94, 3.2, -18], [104, 7, 0], pushK(f, 1834, 0.002), { fov: 46, roll: -0.03 }) },
   ],
   14: [
     { f: 1874, s: (f) => dolly([98.8, 1.4, -11], [102.6, 10.5, -1], pushK(f, 1874, 0.0025, 0.006, 30), { fov: 50, roll: 0.03 }) },
-    { f: 1924, cut: true, s: (f) => dolly([100.4, 14.3, -4.0], [102.2, 13.9, -0.8], pushK(f, 1924, 0.0022, 0.006, 25), { fov: 38 }) },
+    { f: 1924, cut: true, s: (f) => dolly([103.9, 14.1, -4.6], [101.2, 13.5, -0.9], pushK(f, 1924, 0.0022, 0.006, 25), { fov: 42 }) },
   ],
 };
 
@@ -308,7 +308,7 @@ export const DOF: Dof[] = [
   { f: 1700, cInf: 0 },
   { f: 1782, cInf: 11, focus: () => [102.9, 2.0, -1.2] },
   { f: 1834, cInf: 0 },
-  { f: 1924, cInf: 12, focus: () => [102, 14.1, -0.9] },
+  { f: 1924, cInf: 10, focus: () => [101.6, 13.9, -1.35] },
 ];
 export const dofAt = (f: number) => {
   let i = 0; while (i + 1 < DOF.length && f >= DOF[i + 1].f) i++;

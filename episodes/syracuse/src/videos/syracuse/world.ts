@@ -119,7 +119,7 @@ const makeShip = (kind: ShipPose["kind"], M: Record<string, THREE.Material>): Sh
   const ram = new THREE.Mesh(new THREE.ConeGeometry(0.42, 2.2, 6), M.bronze); ram.rotation.x = Math.PI / 2; ram.position.set(0, -0.2, L / 2 + 0.7); g.add(ram);
   for (const s of [-1, 1]) {
     const eye = new THREE.Mesh(new THREE.PlaneGeometry(1.25, 0.78), M.eye);
-    eye.position.set(s * 0.95, DECK_Y - 0.1, L / 2 - 2.0); eye.rotation.y = s * (Math.PI / 2 - 0.35); eye.layers.set(NOINK); g.add(eye);
+    eye.position.set(s * 1.3, DECK_Y - 0.5, L / 2 - 2.0); eye.rotation.y = s * (Math.PI / 2 - 0.42); eye.layers.set(NOINK); g.add(eye);
   }
   // mast + yard + sail
   const sail = new THREE.Group();
@@ -194,7 +194,7 @@ export class World {
     for (const m of [this.sunDisc, this.sunHalo]) { m.frustumCulled = false; m.layers.set(NOINK); R.add(m); }
     this.hemi = new THREE.HemisphereLight("#cfe6ff", "#6c5c8c", 1.1);
     this.sun = new THREE.DirectionalLight("#fff0d6", 2.6);
-    this.sun.castShadow = true; this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.castShadow = true; this.sun.shadow.mapSize.set(1536, 1536);
     R.add(this.hemi, this.sun, this.sun.target);
     this.cloudMaps = { day: [0, 1, 2, 3].map((k) => cloudHD(k, LOOK.day.cloud)), golden: [0, 1, 2, 3].map((k) => cloudHD(k, LOOK.golden.cloud)) };
     for (let i = 0; i < 10; i++) {
@@ -381,7 +381,7 @@ export class World {
     const lg = new THREE.SphereGeometry(0.28, 10, 8), lm = new THREE.MeshBasicMaterial({ color: new THREE.Color(5.5, 3.0, 1.2) });
     for (let x = 84; x < 128; x += 3.1) { const m = new THREE.Mesh(lg, lm); m.position.set(x, MERLON + 0.55 + 0.25 * Math.sin(x), 0.35); m.layers.set(NOINK); this.lanterns.add(m); }
     R.add(this.lanterns);
-    this.stick = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.09, 1.7), M.wood); this.stick.castShadow = true; R.add(this.stick);
+    this.stick = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.13, 1.9), M.wood); this.stick.castShadow = true; R.add(this.stick);
   }
 
   private rig(key: string, kind: ShipPose["kind"]) {

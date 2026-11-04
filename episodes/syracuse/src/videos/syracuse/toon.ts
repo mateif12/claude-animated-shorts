@@ -594,12 +594,12 @@ export const bodyFront = (p: Pen, o: Outfit, opts: FrontOpts) => {
       const S = sh(1);
       arms.push({ pts: [S, [tcx + 1.1 * T.a + 12 * u, S[1] - 0.25 * HH], [tcx + 1.12 * T.a + 16 * u, S[1] - 0.72 * HH]], front: true });
     } else if (Array.isArray(prop) && prop[0] === "helmetcup") { // both hands forward holding the helmet
-      const S = sh(1), k = clamp(prop[1], 0, 1);
-      arms.push({ pts: [S, [tcx + 1.05 * T.a + 4 * u, S[1] + 0.3 * HH], [tcx + 0.55 * T.a, S[1] + 0.22 * HH - k * 0.12 * HH]], front: true });
+      const S = sh(1);
+      arms.push({ pts: [S, [tcx + 0.2 * T.a, S[1] + 0.32 * HH], [tcx - 1.25 * T.a + 22 * u, chin + 0.42 * HH]], front: true });
     } else arms.push({ pts: hang(1, sw), front: false });
   }
   if (mode === "sit" && prop === "compass") arms[1] = { pts: [sh(1), [tcx + 1.15 * T.a + 10 * u, sh(1)[1] + 0.32 * HH], [tcx + 0.55 * T.a, sh(1)[1] + 0.42 * HH]], front: true };
-  if (Array.isArray(prop) && prop[0] === "helmetcup") arms[0] = { pts: [sh(-1), [tcx - 1.05 * T.a - 4 * u, sh(-1)[1] + 0.3 * HH], [tcx - 0.45 * T.a, sh(-1)[1] + 0.3 * HH - clamp(prop[1], 0, 1) * 0.05 * HH]], front: true };
+  if (Array.isArray(prop) && prop[0] === "helmetcup") arms[0] = { pts: [sh(-1), [tcx - 1.2 * T.a - 6 * u, sh(-1)[1] + 0.26 * HH], [tcx - 1.25 * T.a - 34 * u, chin + 0.4 * HH]], front: true };
   const drawArm = (a: Arm) => { p.stroke(curve(a.pts[0], a.pts[1], a.pts[2]), 5.2 * u, armCol); p.dot(a.pts[2][0], a.pts[2][1], 5.5 * u); };
   // behind the body: rifle, sword, arms
   if (rifle) {
@@ -671,13 +671,14 @@ export const bodyFront = (p: Pen, o: Outfit, opts: FrontOpts) => {
     for (const dx of [-16, 18]) { p.stroke([[hx, hy - 6 * u], [hx + dx * u, hy + 52 * u]], 6 * u, INK); p.stroke([[hx, hy - 6 * u], [hx + dx * u, hy + 52 * u]], 3.4 * u, "#c9ccd2"); }
     p.dot(hx, hy - 4 * u, 3.5 * u, "#c9a44a"); p.dot(hx, hy, 5.5 * u);
   }
-  if (Array.isArray(prop) && prop[0] === "helmetcup") {
-    const k = clamp(prop[1], 0, 1), [hx, hy] = arms[1].pts[2], [lx] = arms[0].pts[2], mx = (hx + lx) / 2, my = hy - 4 * u, ang = rad(-75 * k);
+  if (Array.isArray(prop) && prop[0] === "helmetcup") { // the general's helmet held upside down like a cup, plume dangling
+    const k = clamp(prop[1], 0, 1), mx = tcx - 1.25 * T.a - 8 * u, my = chin + 0.42 * HH, ang = rad(-80 * k);
     const Rh = (pts: P2[]) => rotPts(pts, ang, mx, my);
-    if (k > 0.25) { const sx = mx - 24 * u - 30 * u * k, sy = my - 6 * u; p.stroke(curve([sx, sy], [sx - 16 * u, sy + 0.25 * HH], [sx - 12 * u, sy + 0.62 * HH], 10), 9 * u * k, "#6fb0e6"); }
-    const bowl = Rh(ellPts(mx, my, 30 * u, 24 * u, 0, 180));
-    p.shadedFill(bowl, "#d9a441", "#a87a2c", light, 30 * u); p.poly(bowl, null, 3.2 * u);
-    p.poly(Rh([[mx - 31 * u, my - 2 * u], [mx + 31 * u, my - 2 * u], [mx + 31 * u, my + 3 * u], [mx - 31 * u, my + 3 * u]]), "#b8893a", 2 * u);
+    if (k > 0.3) { const [sx, sy] = Rh([[mx - 30 * u, my - 4 * u]])[0]; p.stroke(curve([sx, sy], [sx - 10 * u, sy + 0.3 * HH], [sx - 4 * u, sy + 0.8 * HH], 10), 10 * u * k, "#6fb0e6"); p.stroke(curve([sx + 4 * u, sy], [sx - 4 * u, sy + 0.3 * HH], [sx + 2 * u, sy + 0.8 * HH], 10), 3 * u * k, "#d8f0ff"); }
+    for (let i = 0; i < 7; i++) { const x0 = mx - 14 * u + i * 4.6 * u, pts = Rh([[x0, my + 30 * u], [x0 + (i - 3) * 3 * u, my + 50 * u], [x0 + (i - 3) * 5 * u, my + 70 * u]]); p.stroke(curve(pts[0], pts[1], pts[2], 6), 8 * u, INK); p.stroke(curve(pts[0], pts[1], pts[2], 6), 5 * u, i % 2 ? "#c8323a" : "#b02a33"); }
+    const bowl = Rh(ellPts(mx, my, 30 * u, 32 * u, 0, 180));
+    p.shadedFill(bowl, "#e0b04e", "#9a6c22", light, 30 * u); p.poly(bowl, null, 3.4 * u);
+    p.band(Rh([[mx - 31 * u, my], [mx + 31 * u, my]]), "#b8893a", 6 * u, 1.6 * u, "round");
     for (const a of arms) p.dot(a.pts[2][0], a.pts[2][1], 5.5 * u);
   }
   if (Array.isArray(prop) && prop[0] === "scutum") {

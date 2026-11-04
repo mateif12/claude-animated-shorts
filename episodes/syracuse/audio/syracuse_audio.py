@@ -275,7 +275,7 @@ def main():
     g = -15.0 - integrated(mix)
     mix *= dbg(g)
     # simple look-ahead peak limiter to -1.2 dBTP
-    ceil = dbg(-1.2)
+    ceil = dbg(-2.0)
     pk = np.max(np.abs(mix), axis=0)
     from scipy.ndimage import maximum_filter1d
     gain = np.minimum(1.0, ceil / np.maximum(maximum_filter1d(pk, ns(0.004)), 1e-9))
