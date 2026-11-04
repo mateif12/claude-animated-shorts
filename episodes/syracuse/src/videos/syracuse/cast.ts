@@ -125,7 +125,7 @@ const LEG = [0, 1, 2, 3].map((v) => legionary(v));
 const seedOf = (i: number) => ((i * 5 + 3) % 7) + 1;
 /** drawing resolution by distance: [canvas w, h, scale from the 600 x 1000 design]; sized for the 1440 x 2560 final */
 const tier = (d: number): [number, number, number] =>
-  d < 4.5 ? [1200, 2000, 2.0] : d < 9 ? [780, 1300, 1.3] : d < 20 ? [420, 700, 0.7] : [240, 400, 0.4]; // capped for CPU rendering
+  d < 6 ? [720, 1200, 1.2] : d < 14 ? [420, 700, 0.7] : [240, 400, 0.4]; // sized for the 540x960 CPU render
 
 // ---------------- light ----------------
 const SUN = new THREE.Vector3(0.5, 0.75, -0.4).normalize();

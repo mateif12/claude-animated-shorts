@@ -1,7 +1,7 @@
 # Sound cues: The One Guy Who Made Rome Look Stupid
 
 Length 66.333 s (1990 f @ 30 fps), 48 kHz stereo.
-Integrated loudness of the mix: -15.01 LUFS, true peak -1.95 dBTP.
+Integrated loudness of the mix: -15.00 LUFS, true peak -1.95 dBTP.
 
 | t (s) | frame | SFX event | gain dB |
 |---|---|---|---|

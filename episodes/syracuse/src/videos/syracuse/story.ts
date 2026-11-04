@@ -195,8 +195,9 @@ const add = (a: V3, b: V3): V3 => [a[0] + b[0], a[1] + b[1], a[2] + b[2]];
 
 const CAMS: Record<number, Key[]> = {
   1: [
-    { f: 0, s: (f) => dolly([12, 5.5, -138], [0, 9, -10], pushK(f, 0, 0.0035), { fov: 48, roll: -0.03 }) },
-    { f: 34, dur: 40, s: (f) => dolly([5, 3.4, -116], [0, 9.5, -6], pushK(f, 34, 0.003), { fov: 46, roll: 0.02 }) },
+    // high over the fleet (the old low path flew through a sail): the whole armada heading for the walls
+    { f: 0, s: (f) => dolly([14, 24, -165], [-2, 4, -40], pushK(f, 0, 0.003), { fov: 50, roll: -0.03 }) },
+    { f: 34, dur: 40, s: (f) => dolly([8, 19, -150], [-3, 6, -20], pushK(f, 34, 0.003), { fov: 48, roll: 0.02 }) },
   ],
   2: [
     { f: 81, s: (f) => dolly([10.5, 1.4, -27], [0, 10.5, -16], pushK(f, 81, 0.002), { fov: 50, roll: 0.05 }) },
