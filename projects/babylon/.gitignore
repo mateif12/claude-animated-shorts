@@ -1,0 +1,6 @@
+node_modules/
+out/
+remotion-tmp/
+audio/_cache/
+audio/__pycache__/
+audio/run.log
