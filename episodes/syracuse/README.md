@@ -31,11 +31,18 @@ npx remotion render src/index.ts SyracuseShort out/frames --sequence --image-for
 ffmpeg -framerate 30 -i out/frames/element-%04d.jpeg -i audio/mix.wav -vf "scale=1440:2560:flags=lanczos" -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p -c:a aac -b:a 256k -map 0:v:0 -map 1:a:0 -shortest out/syracuse_1440x2560.mp4
 ```
 
-## Render note (CPU-only container)
-This was produced in a cloud container with **no GPU**: three.js ran on SwiftShader. Measured costs:
-- Full template post chain at 1080×1920: ~20 s/frame.
-- Ink + grade at 720×1280: ~7.4 s/frame.
+## Render note (CPU-only container): what the delivered file actually is
+`syracuse_540x960.mp4` was rendered in a cloud container **without a GPU** (three.js on SwiftShader) under a hard
+2-hour production limit. It is **native 540x960, not upscaled and not 2K**:
+- **Resolution:** a 540x960 render buffer.
+- **Timing:** animated **on twos**. 995 drawings, each held for 2 frames, encoded at 30 fps, so camera glides step at 15 per second.
+- **Kept:** ink outlines, two-tone shading, painted textures, the colour grade, all characters, cameras, kicks and timing.
+- **Turned off:** lens blur (depth of field), bloom (lantern and sun glow) and MSAA.
 
-To finish in one session, the final was rendered at **720×1280 and upscaled ×2 (Lanczos) to the required 1440×2560**, with MSAA 0 and bloom off. Ink lines, two-tone shading, painted textures, lens blur on close-ups, grade and all camera work are kept.
+Measured cost: about 3–4.7 s per drawing in this configuration, 70 minutes in total. The full template look at 1080x1920 costs about 20 s per frame here.
 
-On a GPU machine, render natively with `--scale 1.3333 --props='{"post":{"msaa":4}}'` (bloom is on by default) for the full-quality 2K master.
+To make the 2K master on a GPU machine, render all 1990 frames natively:
+```bash
+npx remotion render src/index.ts SyracuseShort out/video.mp4 --codec h264 --crf 16 --scale 1.3333
+```
+Then mux `audio/mix.wav` with `-map 0:v:0 -map 1:a:0`. Use `scripts/render_final.mjs` plus `scripts/encode_final.sh` only for the CPU path.
