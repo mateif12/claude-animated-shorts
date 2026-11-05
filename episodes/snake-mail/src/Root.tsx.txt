@@ -1,0 +1,10 @@
+import React from "react";
+import { Composition } from "remotion";
+import { SnakeShort, SNAKE_FRAMES } from "./videos/snake/Snake";
+export const Root: React.FC = () => (<>
+  <Composition id="SnakeShort" component={SnakeShort} durationInFrames={SNAKE_FRAMES} fps={30} width={1080} height={1920} />
+  <Composition id="SnakeShort720" component={SnakeShort} durationInFrames={SNAKE_FRAMES} fps={30} width={720} height={1280} />
+  <Composition id="SnakeShort720x15" component={SnakeShort} durationInFrames={Math.ceil(SNAKE_FRAMES / 2)} fps={15} width={720} height={1280} />
+  <Composition id="SnakeShort1080x15" component={SnakeShort} durationInFrames={Math.ceil(SNAKE_FRAMES / 2)} fps={15} width={1080} height={1920} />
+  <Composition id="SnakeShort608x15" component={SnakeShort} durationInFrames={Math.ceil(SNAKE_FRAMES / 2)} fps={15} width={608} height={1080} />
+</>);
